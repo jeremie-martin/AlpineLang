@@ -1,6 +1,8 @@
 import AST
 import Parser
 import Sema
+import Foundation
+
 
 public struct Interpreter {
 
@@ -10,6 +12,11 @@ public struct Interpreter {
     self.symbolCreator = SymbolCreator(context: astContext)
     self.nameBinder = NameBinder(context: astContext)
     self.constraintCreator = ConstraintCreator(context: astContext)
+    print("--------------------------------------------------")
+    for (symbol, function) in astContext.builtinScope.semantics {
+      print("??????????", symbol.name, symbol.type, symbol.scope.id)
+    }
+    print("--------------------------------------------------")
   }
 
   /// Whether or not the interpreter is in debug mode.
@@ -17,36 +24,149 @@ public struct Interpreter {
   /// The AST context of the interpreter.
   public let astContext = ASTContext()
 
-  private let normalizer: Normalizer
+  private var normalizer: Normalizer
   private let symbolCreator: SymbolCreator
   private let nameBinder: NameBinder
   private let constraintCreator: ConstraintCreator
+
+  private var inputMod: String = ""
 
   // Load a module from a text input.
   @discardableResult
   public mutating func loadModule(fromString input: String) throws -> Module {
     // Parse the module into an untyped AST.
     let parser = try Parser(source: input)
-    var module = try parser.parseModule()
+    let module = try parser.parseModule()
 
     // Run semantic analysis to get the typed AST.
-    module = try runSema(on: module) as! Module
-    astContext.modules.append(module)
+    let typedModule = try runSema(on: module) as! Module
+    astContext.modules.append(typedModule)
+
     return module
   }
 
   // Evaluate an expression from a text input, within the currently loaded context.
-  public func eval(string input: String) throws -> Value {
+  public mutating func eval(string input: String, replace: [String: Value] = [:]) throws -> Value {
+    print("oh")
+    print("mdrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
+    print("mdrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
+    let cpy = astContext.modules[0].copy()
+    print("cpyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy")
+    let dumper = ASTDumper(outputTo: Console.out)
+    /* astContext.modules.removeFirst() */
+    /*   astContext.modules.append(cpy) */
+      print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
+      print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
+      print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
+      print(cpy)
+      cpy.statements.forEach { print($0.module) }
+      astContext.modules[0].statements.forEach { print($0.module) }
+      print(astContext.modules[0])
+      dumper.dump(ast: astContext.modules[0])
+      print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
+      print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
+      print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
+    /* try loadModule(fromString: inputMod) */
+    
     // Parse the epxression into an untyped AST.
     let parser = try Parser(source: input)
     let expr = try parser.parseExpr()
 
     // Expressions can't be analyzed nor ran out-of-context, they must be nested in a module.
     let module = Module(statements: [expr], range: expr.range)
-
     // Run semantic analysis to get the typed AST.
-    let typedModule = try runSema(on: module) as! Module
-    return eval(expression: typedModule.statements[0] as! Expr)
+    let typedModule = try runSema(on: module, replace: replace) as! Module
+    print("---------------***************---------------********************")
+    dumper.dump(ast: module)
+    print("---------------***************---------------********************")
+
+    /* let dumper = ASTDumper(outputTo: Console.out) */
+    /* dumper.dump(ast: typedModule) */
+    let owo = eval(expression: typedModule.statements[0] as! Expr)
+
+    return owo
+
+    switch owo {
+    case .int, .bool, .real, .string:
+      let parser2 = try Parser(source: owo.description)
+      var expr2 = try parser2.parseExpr()
+      /* let dumper = ASTDumper(outputTo: Console.out) */
+      /* expr2.module = //astContext.modules[0].copy() */
+      expr2.type = BuiltinType.int
+      return expr2
+      /* let mmm = Module(statements: [expr2], range: expr2.range) as! Expr */
+
+    case .tuple(let e, let label, let elements):
+      return e
+
+    case .function(var f, let aaa):
+      var rep: [String: Expr] = [:]
+      /* aaa.forEach { */
+      for bbb in aaa {
+        switch bbb.value  {
+        case .int, .bool, .real, .string:
+          let parser2 = try Parser(source: bbb.value.description)
+          var expr2 = try parser2.parseExpr()
+          /* rep[bbb.key.name] = Module(statements: [expr2], range: expr2.range) as! Expr */
+          expr2.module = f.module
+          rep[bbb.key.name] = expr2
+            print("mod v", rep[bbb.key.name]?.module)
+        case .tuple(let e, _, _):
+            rep[bbb.key.name] = e
+            /* rep[bbb.key.name]?.module = e.module */
+            print("mod e", rep[bbb.key.name]?.module)
+        case .function(var fff, _):
+            rep[bbb.key.name] = fff
+            print("mod f", fff.module, rep[bbb.key.name]?.module)
+          default:
+              /* print("   ", $0.key.name, $0.value) */
+            break
+        }
+      }
+      /* let cpy = f.body.copy() as! Expr */
+      print("00000000")
+      print("rep", rep.count)
+      let dumper = ASTDumper(outputTo: Console.out)
+      dumper.dump(ast: f)
+      normalizer.replace = rep
+      let ast = f.copy()
+      print("****************")
+      print("****************")
+      print("****************")
+      print(f.body.type)
+      f.body.module.statements.forEach { print($0.module) }
+      print("****************")
+      print("****************")
+      print("****************")
+      print("issouuuuuuuuuuu")
+      print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaae")
+      print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaae")
+      print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaae")
+      print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", rep)
+      ast.body = try normalizer.transform(ast.body.copy()) as! Expr
+      normalizer.replace = [:]
+      print("dooooooooooooooooooooooooooooone")
+
+      /* astContext.modules[0] = cpy */
+      /* dumper.dump(ast: astContext.modules[0]) */
+      print("LAAAAAAAAAAAAAST CHEEEEEEEEEEEEEEEEECK")
+      print("LAAAAAAAAAAAAAST CHEEEEEEEEEEEEEEEEECK")
+      print("LAAAAAAAAAAAAAST CHEEEEEEEEEEEEEEEEECK")
+      print(ast.body.type)
+      print(ast.body.module)
+      ast.body.module.statements.forEach { print($0.module) }
+      dumper.dump(ast: ast)
+      print("LAAAAAAAAAAAAAST CHEEEEEEEEEEEEEEEEECK")
+      print("LAAAAAAAAAAAAAST CHEEEEEEEEEEEEEEEEECK")
+      print("LAAAAAAAAAAAAAST CHEEEEEEEEEEEEEEEEECK")
+      /* dumper.dump(ast: astContext.modules[0]) */
+      /* astContext.modules[0] = modCopy */
+      /* let moduleTest = Module(statements: [f], range: expr.range) */
+      return ast
+    default: break
+    }
+
+    return nil
   }
 
   public func eval(expression: Expr) -> Value {
@@ -54,10 +174,20 @@ public struct Interpreter {
     let evalContext: EvaluationContext = [:]
     for (symbol, function) in astContext.builtinScope.semantics {
       evalContext[symbol] = .builtinFunction(function)
+      print(" /", symbol.name, symbol.type, symbol.scope.id)
     }
 
+      /* for (symbol, function) in expression.module.functions { */
+      /*   print("  +", symbol.name) */
+      /*   evalContext[symbol] = .function(function, closure: [:]) */
+      /* } */
+
     for module in astContext.modules {
+      /* print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") */
+      let dumper = ASTDumper(outputTo: Console.out)
+      /* dumper.dump(ast: module) */
       for (symbol, function) in module.functions {
+        print("  -", symbol.name, symbol.scope.id, function.module)
         evalContext[symbol] = .function(function, closure: [:])
       }
     }
@@ -68,26 +198,55 @@ public struct Interpreter {
 
   private func eval(_ expr: Expr, in evalContext: EvaluationContext) -> Value {
     switch expr {
-    case let e as Func          : return eval(e, in: evalContext)
-    case let e as If            : return eval(e, in: evalContext)
-    case let e as Match         : return eval(e, in: evalContext)
-    case let e as Call          : return eval(e, in: evalContext)
-    case let e as Tuple         : return eval(e, in: evalContext)
-    case let e as Select        : return eval(e, in: evalContext)
-    case let e as Ident         : return eval(e, in: evalContext)
-    case let e as Scalar<Bool>  : return .bool(e.value)
-    case let e as Scalar<Int>   : return .int(e.value)
-    case let e as Scalar<Double>: return .real(e.value)
-    case let e as Scalar<String>: return .string(e.value)
+    case let e as Func          : print("111111111111111"); return eval(e, in: evalContext)
+    case let e as If            : print("22222222222");  return eval(e, in: evalContext)
+    case let e as Match         : print("33333333333"); return eval(e, in: evalContext)
+    case let e as Call          : print("44444444444"); return eval(e, in: evalContext)
+    case let e as Tuple         : print("55555555555"); return eval(e, in: evalContext)
+    case let e as Select        : print("66666666"); return eval(e, in: evalContext)
+    case let e as Ident         : print("777777777"); return eval(e, in: evalContext)
+    case let e as Scalar<Bool>  : print("88888888888888"); return .bool(e.value)
+    case let e as Scalar<Int>   : print("999999999999 ; \(e.value)'"); return .int(e.value)
+    case let e as Scalar<Double>: print("aaaaaaaa"); return .real(e.value)
+    case let e as Scalar<String>: print("bbbbbbbb"); return .string(e.value)
     default:
+      print("222222222222222")
+      print((expr as! Scalar<Int>).value)
+      /* print(.i(expr as! Scalar<Int>).value)) */
       fatalError()
     }
+
   }
+    /* for mod in astContext.modules { */
+    /*   let dumper = ASTDumper(outputTo: Console.out) */
+    /*   for (symbol, function) in mod.functions { */
+    /*     print("  -", symbol.name, symbol.scope.id, function.module) */
+    /*   } */
+    /* } */
+    /* print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") */
+    /* print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") */
+    /* print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") */
+    /* print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") */
 
   public func eval(_ expr: Func, in evalContext: EvaluationContext) -> Value {
     let closure = evalContext.copy
     let value = Value.function(expr, closure: closure)
+    print()
+    print("------------")
+    let mod = expr.module!
+      let dumper = ASTDumper(outputTo: Console.out)
+      for (symbol, function) in mod.functions {
+        print("  -", symbol.name, symbol.scope.id, function.module)
+      }
+    
+    closure.forEach { if($0.key.name == "toNat") {print("  *", $0.key.name, $0.key.type, $0.key, expr.type)}}
+    print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
     closure[expr.symbol!] = value
+    /* let issou = eval(expr.body, in: closure) */
+    
     return value
   }
 
@@ -132,7 +291,7 @@ public struct Interpreter {
       return matchContext
 
     case let tuplePattern as Tuple:
-      guard case .tuple(let label, let elements) = subject
+      guard case .tuple(_, let label, let elements) = subject
         else { return nil }
       guard (label == tuplePattern.label) && (elements.count == tuplePattern.elements.count)
         else { return nil }
@@ -170,14 +329,28 @@ public struct Interpreter {
 
   public func eval(_ expr: Call, in evalContext: EvaluationContext) -> Value {
     // Evaluate the callee and its arguments.
-    let callee = eval(expr.callee, in: evalContext)
+    let dumper = ASTDumper(outputTo: Console.out)
+    dumper.dump(ast: expr)
+    var callee = eval(expr.callee, in: evalContext)
     let arguments = expr.arguments.map { eval($0.value, in: evalContext) }
 
     switch callee {
     case .builtinFunction(let function):
+      print("issou")
       let swiftArguments = arguments.compactMap { $0.swiftValue }
+      print("pouloulou")
       assert(swiftArguments.count == arguments.count)
-      return Value(value: function(swiftArguments))!
+
+      swiftArguments.forEach { print("-", $0, type(of: $0)) }
+      print("function", type(of: function))
+      dump(function)
+      print("eval test", function([1 as Any, 2 as Any]))
+      print(function(swiftArguments))
+      print("sad")
+
+      let aaa = Value(value: function(swiftArguments))!
+      print("test")
+      return aaa
 
     case .function(let function, let closure):
       // Update the evaluation context with the function's arguments.
@@ -201,13 +374,14 @@ public struct Interpreter {
   public func eval(_ expr: Tuple, in evalContext: EvaluationContext) -> Value {
     // Evaluate the tuple's elements.
     let elements = expr.elements.map { (label: $0.label, value: eval($0.value, in: evalContext)) }
-    return .tuple(label: expr.label, elements: elements)
+    /* expr.elements = elements */
+    return .tuple(expr: expr, label: expr.label, elements: elements)
   }
 
   public func eval(_ expr: Select, in evalContext: EvaluationContext) -> Value {
     // Evaluate the owner.
     let owner = eval(expr.owner, in: evalContext)
-    guard case .tuple(label: _, let elements) = owner
+    guard case .tuple(_, label: _, let elements) = owner
       else { fatalError("invalid expression: expected owner to be a tuple") }
 
     switch expr.ownee {
@@ -224,22 +398,47 @@ public struct Interpreter {
   }
 
   public func eval(_ expr: Ident, in evalContext: EvaluationContext) -> Value {
+    print("&&&&&&&&&&&&")
     guard let sym = expr.symbol
       else { fatalError("invalid expression: missing symbol") }
 
+    let dumper = ASTDumper(outputTo: Console.out)
+    dumper.dump(ast: expr.module)
+
     // Look for the identifier's symbol in the evaluation context.
+    /*   if(sym.name == "bar"){ */
+    /* evalContext.forEach { if($0.key.name == "bar") {print("  *", $0.key.name, $0.key.type == sym.type, $0.key.scope.id, */
+    /* sym.scope.id, sym.name, sym.hashValue, $0.key.hashValue, $0.key == sym )} }} */
     guard let value = evalContext[sym]
       else { fatalError("invalid expression: unbound identifier '\(expr.name)'") }
+    print("ééééééééééé")
+    print(value)
     return value
   }
 
   // Perform type inference on an untyped AST.
-  private func runSema(on module: Module) throws -> Node {
+  private func runSema(on module: Module, replace: [String: Expr] = [:]) throws -> Node {
+    /* for (symbol, function) in astContext.builtinScope.semantics { */
+    /*   print("///", symbol.name, symbol.type, symbol.scope.id) */
+    /* } */
+    /* var rep: [String: Expr] = [:] */
+    /* for r in replace { */
+    /*   rep[r.key] = r.value.copy() */
+    /*   rep[r.key]!.module = module */
+    /* } */
+      
+    print("//////////////////////")
+    normalizer.replace = replace
     var ast = try normalizer.transform(module)
+    normalizer.replace = [:]
+    print("\\\\\\\\\\\\\\\\\\\\\\\\")
+    /* let dumper = ASTDumper(outputTo: Console.out) */
+    /* dumper.dump(ast: module) */
 
-    try symbolCreator.visit(module)
-    try nameBinder.visit(module)
-    try constraintCreator.visit(module)
+    try symbolCreator.visit(ast)
+    try nameBinder.visit(ast)
+    try constraintCreator.visit(ast)
+
 
     if debug {
       for constraint in astContext.typeConstraints {
@@ -247,6 +446,8 @@ public struct Interpreter {
       }
       print()
     }
+    print("PFIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIEX")
+
 
     var solver = ConstraintSolver(constraints: astContext.typeConstraints, in: astContext)
     let result = solver.solve()
@@ -254,7 +455,7 @@ public struct Interpreter {
     switch result {
     case .success(let solution):
       let dispatcher = Dispatcher(context: astContext, solution: solution)
-      ast = try dispatcher.transform(module) as! Module
+      ast = try dispatcher.transform(ast) as! Module
 
     case .failure(let errors):
       for error in errors {

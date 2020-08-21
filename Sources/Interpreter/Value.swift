@@ -15,8 +15,7 @@ public enum Value {
   /// A user function.
   case function(Func, closure: EvaluationContext)
   /// A tuple.
-  case tuple(label: String?, elements: [(label: String?, value: Value)])
-
+  case tuple(expr: Tuple, label: String?, elements: [(label: String?, value: Value)])
 }
 
 extension Value {
@@ -36,10 +35,10 @@ extension Value {
   /// Swift native type (e.g. `Int`).
   var swiftValue: Any? {
     switch self {
-    case .bool(let value)   : return value
-    case .int (let value)   : return value
-    case .real(let value)   : return value
-    case .string(let value) : return value
+    case .bool(let value)   : print("pppp");return value
+    case .int (let value)   : print("qqqq", type(of: value), value);return value
+    case .real(let value)   : print("rrrr");return value
+    case .string(let value) : print("ssss");return value
     default                 : return nil
     }
   }
@@ -51,6 +50,7 @@ extension Value: CustomStringConvertible {
   public var description: String {
     switch self {
     case .bool(let value):
+      print("vvvvvvvvvvvvvvvvvvv")
       return value.description
 
     case .int(let value):
@@ -66,9 +66,11 @@ extension Value: CustomStringConvertible {
       return "<built-in function>"
 
     case .function(let f, closure: _):
+      /* return f.name! */
+      /* print(f.body.type) */
       return "<function \(f.type!)>"
 
-    case .tuple(let label, let elements):
+    case .tuple(_, let label, let elements):
       guard (label != nil) || (!elements.isEmpty)
         else { return "()" }
       let elts = elements

@@ -1,82 +1,145 @@
-import Foundation
-
-import ArgParse
 import AST
-import Parser
 import Interpreter
 
-private func run(_ block: () throws -> Void) {
-  do {
-    return try block()
-  } catch let error as LocatableError {
-    diagnose(error: error, in: Console.err)
-  } catch InterpreterError.staticFailure(let errors) {
-    diagnose(errors: errors, in: Console.err)
-  } catch {
-    print(error)
-  }
-  exit(-1)
-}
+/* type f :: (MyBoolean) -> MyBoolean */
+/* type x :: MyBoolean */
+/* func owo(_ bool: MyBoolean) -> MyBoolean :: #MyTrue */
 
-// Parse the command line arguments.
+var module: String = """
+type MyBoolean :: #MyTrue or #MyFalse
+type Nat :: #zero or #succ(Nat)
 
-private let parser: ArgumentParser = [
-  .positional("input"              , description: "path to a file with the expression to execute"),
-  .option    ("import" , alias: "i", description: "import a module"),
-  .option    ("exec"   , alias: "e", description: "execute the given expression"),
-  .flag      ("verbose", alias: "v", description: "output various compiler debug info"),
-  .flag      ("dump-ast"           , description: "output the ast"),
-  .flag      ("help"   , alias: "h", description: "show this help"),
-]
+func MyNot2(_ bool: MyBoolean) -> Nat ::
+    #zero
 
-private let parseResult: ArgumentParser.ParseResult
-do {
-  parseResult = try parser.parse(CommandLine.arguments)
-} catch let error as ArgumentParserError {
-  switch error {
-  case .emptyCommandLine:
-    Console.err.print("error: command line is empty")
-  case .missingArguments:
-    Console.err.print("error: no input file")
-  case .unexpectedArgument(let arg):
-    Console.err.print("error: unexpected argument '\(arg)'")
-  case .invalidArity(let arg, _):
-    Console.err.print("error: invalid value for argument '\(arg.name)'")
-  }
-  exit(-1)
-}
+func add(_ x: Nat, _ y: Nat) -> MyBoolean ::
+  #MyFalse
 
-guard !(parseResult["help"] as! Bool) else {
-  parser.printUsage(to: &Console.out)
-  exit(0)
-}
+func MyNot(_ bool: MyBoolean) -> MyBoolean ::
+  match(bool)
+    with #MyTrue ::
+      #MyFalse
+    with #MyFalse ::
+      #MyTrue
 
-let verbose = parseResult["verbose"] as! Bool
-let dumpAST = parseResult["dump-ast"] as! Bool
-var interpreter = Interpreter(debug: verbose)
-let dumper = ASTDumper(outputTo: Console.err)
+func toNat(_ foo: (MyBoolean) -> MyBoolean) -> (MyBoolean) -> Nat ::
+  func blahblah(_ bar: MyBoolean) -> Nat ::
+    match(foo(bar))
+      with #MyTrue ::
+        #succ(#zero)
+      with #MyFalse ::
+        #zero
 
-// Load the module if provided.
-if let modulePath = parseResult["import"] as? String {
-  let moduleText = try String(contentsOfFile: modulePath, encoding: .utf8)
-  run {
-    let module = try interpreter.loadModule(fromString: moduleText)
-    if dumpAST {
-      dumper.dump(ast: module)
-    }
-  }
-}
+func plusOne(_ x: Int) -> Int ::
+  x + 1
+"""
+/* type owo :: (MyBoolean) -> MyBoolean */
+/* type x :: MyBoolean */
+/* var falseAST = try! interpreter.eval(string: "#MyFalse")! */
+/* let ret = try! interpreter.eval(string: "toNat(MyNot)", replace: ["xxx": falseAST])! */
+/* let funcAST = try! interpreter.eval(string: "f(x)", replace: ["f": ret, "x": falseAST])! */
+/* let funcAS2T = try! interpreter.eval(string: "f(x)", replace: ["f": ret, "x": falseAST])! */
+/* dumper.dump(ast: funcAS2T) */
 
-// Execute the given expression.
-let val: Value
-if let exprText = parseResult["exec"] as? String {
-  val = try interpreter.eval(string: exprText)
-} else if let exprPath = parseResult["input"] as? String {
-  let exprText = try String(contentsOfFile: exprPath)
-  val = try interpreter.eval(string: exprText)
-} else {
-  Console.err.print("error: no input")
-  exit(-1)
-}
+/* module = """ */
+/* func add(_ x: Int, _ y: Int) -> Int :: */
+/*   x + y */
+/*  */
+/* func sub(_ x: Int, _ y: Int) -> Int :: */
+/*   x - y */
+/*  */
+/* func mul(_ x: Int, _ y: Int) -> Int :: */
+/*   x * y */
+/*  */
+/*  */
+/* func curry(_ a: Int, op: (Int, Int) -> Int) -> (Int) -> Int :: */
+/*   func partialApply(_ b: Int) -> Int :: */
+/*     op(a,b); */
+/* """ */
+module = """
+type MyBoolean :: #MyTrue or #MyFalse
+type Nat :: #zero or #succ(Nat)
 
-Console.out.print(val)
+func MyNot(_ bool: MyBoolean) -> MyBoolean ::
+  match(bool)
+    with #MyTrue ::
+      #MyFalse
+    with #MyFalse ::
+      #MyTrue
+
+func toNat(_ foo: (MyBoolean) -> MyBoolean) -> (MyBoolean) -> Nat ::
+  func blahblah(_ bar: MyBoolean) -> Nat ::
+    match(foo(bar))
+      with #MyTrue ::
+        #succ(#zero)
+      with #MyFalse ::
+        #zero
+"""
+/* type owo :: (MyBoolean) -> MyBoolean */
+/* type x :: MyBoolean */
+/* var falseAST = try! interpreter.eval(string: "#MyFalse")! */
+/* let ret = try! interpreter.eval(string: "toNat(MyNot)", replace: ["xxx": falseAST])! */
+/* let funcAST = try! interpreter.eval(string: "f(x)", replace: ["f": ret, "x": falseAST])! */
+/* let funcAS2T = try! interpreter.eval(string: "f(x)", replace: ["f": ret, "x": falseAST])! */
+/* dumper.dump(ast: funcAS2T) */
+
+let dumper = ASTDumper(outputTo: Console.out)
+
+var interpreter = Interpreter(debug: false)
+try! interpreter.loadModule(fromString: module)
+
+/* var falseAST = try! interpreter.eval(string: "#MyTrue")! */
+/* let ret = try! interpreter.eval(string: "toNat(MyNot)")! */
+/* let foo = try! interpreter.eval(string: "fff(add(toNat(MyNot)(#MyFalse), #succ(#zero)))", replace: ["fff": ret])! */
+/* dumper.dump(ast: ret) */
+/* let n = try! interpreter.eval(string: "add(1,2)")! */
+/* let n = try! interpreter.eval(string: "curry(1, op: add)")! */
+/* let m = try! interpreter.eval(string: "fff(1,2), replace: ["fff": n])! */
+
+/* let issou = try! interpreter.eval(string: "curry(1, op: add)")! */
+/* let aaa = try! interpreter.eval(string: "curry(1, op: add)")! */
+/* print(aaa.module, issou.module) */
+/* dumper.dump(ast: issou) */
+/* let bar = try! interpreter.eval(string: "f(5)", replace: ["f": issou.copy(), "g": issou.copy()])! */
+/* dumper.dump(ast: bar) */
+
+/* let n = try! interpreter.eval(string: "#MyFalse")! */
+/* let m = try! interpreter.eval(string: "#MyTrue")! */
+let ret = try! interpreter.eval(string: "toNat(MyNot)")!
+/* let owo = try! interpreter.eval(string: "fff(#MyFalse)", replace: ["fff": ret])! */
+/* let p = try! interpreter.eval(string: "fff(#MyTrue)", replace: ["fff": ret])! */
+/*  */
+/* let g = try! interpreter.eval(string: "MyNot")! */
+/* print("\n") */
+/* print("\n") */
+/* print("\n") */
+/* print("\n") */
+/* print("\n") */
+/* print("\n") */
+/* print("\n") */
+/* print("\n") */
+/* print("\n") */
+/* print("\n") */
+/* print("\n") */
+/* print("\n") */
+/* print("\n") */
+/* print("\n") */
+/* let foo = try! interpreter.eval(string: "fff(MyNot(#MyFalse))", replace: ["fff": g])! */
+/* let m = try! interpreter.eval(string: "add(xxx, 3)", replace: ["xxx": n])! */
+/* let plusOne = try! interpreter.eval(string: "curry(1, op: add)")! */
+/* let p = try! interpreter.eval(string: "fff(xxx)", replace: ["fff": plusOne, "xxx": m])! */
+/* let mulTwo = try! interpreter.eval(string: "curry(2, op: mul)")! */
+/* [> let foo = try! interpreter.eval( <] */
+/* [>                 string: "sub(f(yyy), g(xxx))", <] */
+/* [>                 replace: ["f": plusOne, "g": mulTwo, "xxx": n, "yyy": m] <] */
+/* [>                 )! <] */
+/* [>  <] */
+/* dumper.dump(ast: interpreter.astContext.modules[0]) */
+dumper.dump(ast: ret)
+/* dumper.dump(ast: owo) */
+/* dumper.dump(ast: p) */
+/* dumper.dump(ast: foo) */
+/* [> dumper.dump(ast: bar) <] */
+/* [> dumper.dump(ast: bar) <] */
+/* [> dumper.dump(ast: foo) <] */
+/* [> [>  <] <] */

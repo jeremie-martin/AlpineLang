@@ -1,4 +1,5 @@
 public protocol ASTTransformer {
+  /* var replace: [String: Expr] { get set } */
 
   func transform(_ node: Module)          throws -> Node
 

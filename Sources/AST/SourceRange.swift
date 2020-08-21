@@ -1,6 +1,9 @@
 import Utils
 
 public struct SourceLocation {
+  public func copy() -> SourceLocation {
+    return SourceLocation(source: self.source, line: self.line, column: self.column, offset: self.offset)
+  }
 
   public init(source: TextInputBuffer, line: Int = 1, column: Int = 1, offset: Int = 0) {
     self.source = source
@@ -41,6 +44,10 @@ extension SourceLocation: CustomStringConvertible {
 }
 
 public struct SourceRange: RangeExpression {
+
+  public func copy() -> SourceRange {
+    return SourceRange(from: self.start.copy(), to: self.end.copy() )
+  }
 
   public init(from start: SourceLocation, to end: SourceLocation) {
     self.start = start

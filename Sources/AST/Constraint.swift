@@ -69,6 +69,7 @@ public struct Constraint {
     self.kind = kind
     self.types = types
     self.member = member
+
     self.choices = choices
     self.location = location
   }

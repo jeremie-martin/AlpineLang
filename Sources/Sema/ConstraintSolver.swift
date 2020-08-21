@@ -19,7 +19,7 @@ public struct ConstraintSolver {
   // The constraints that are yet to be solved.
   private var constraints: [Constraint]
   // The assumptions made so far on the free types of the AST.
-  private var assumptions: SubstitutionTable
+  public var assumptions: SubstitutionTable
 
   private typealias Success = SubstitutionTable
   private typealias Failure = (constraint: Constraint, cause: SolverResult.FailureKind)
@@ -142,7 +142,7 @@ public struct ConstraintSolver {
       assumptions.set(substitution: a, for: var_)
       return .success
 
-    case (let union as UnionType, _):
+    case (let union as UnionType, let bbbb):
       assert(!(b is TypeVariable))
 
       // Get the substitutions we already inferred for the cases of the union
@@ -177,7 +177,7 @@ public struct ConstraintSolver {
 
       return .success
 
-    case (_, let union as UnionType):
+    case (let xxx, let union as UnionType):
       assert(!(a is TypeVariable))
       assert(!(a is UnionType))
 
@@ -214,6 +214,7 @@ public struct ConstraintSolver {
 
     case (let tl as TupleType, let tr as TupleType):
       // Tuple types never match if they have different lenghts or labels.
+
       guard
         tl.label == tr.label,
         tl.elements.count == tr.elements.count,
@@ -236,6 +237,16 @@ public struct ConstraintSolver {
         types: (ml.type, mr.type),
         location: constraint.location))
       return .success
+
+    case (let ml as Metatype, let mr as TupleType):
+      /* let aaa = Constraint( */
+      /*   kind: constraint.kind, */
+      /*   types: (ml.type, mr.type), */
+      /*   location: constraint.location) */
+      constraints.append(.conformance(t: ml.type, u: mr, at: constraint.location + .unionCase))
+      /* constraints.append(Constraint(kind: constraint.kind, types: (ml.type, mr), location: constraint.location)) */
+      return .success
+      /* return solve(match: Constraint(kind: constraint.kind, types: (ml.type, mr), location: constraint.location)) */
 
     default:
       return .failure

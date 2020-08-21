@@ -1,5 +1,9 @@
 /// Base class for all types in Alpine.
 public class TypeBase: Hashable, CustomStringConvertible {
+  public func copy() -> TypeBase {
+		// print("TypeBase")
+    return self
+  }
 
   fileprivate init() {
   }
@@ -30,6 +34,12 @@ public class TypeBase: Hashable, CustomStringConvertible {
 
 /// Class to represent the description of a type.
 public final class Metatype: TypeBase {
+  override public func copy() -> Metatype {
+		print("Metatype")
+    print("so", self.type)
+    let m = Metatype(of: self.type.copy())
+    return m
+  }
 
   fileprivate init(of type: TypeBase) {
     self.type = type
@@ -45,6 +55,10 @@ public final class Metatype: TypeBase {
 
 /// A special type that's used to represent a typing failure.
 public final class ErrorType: TypeBase {
+  override public func copy() -> ErrorType {
+    print("ErrorType")
+    return self
+  }
 
   public static let get = ErrorType()
 
@@ -56,6 +70,10 @@ public final class ErrorType: TypeBase {
 
 /// Class to represent the built-in types.
 public final class BuiltinType: TypeBase {
+  override public func copy() -> BuiltinType {
+		print("BuiltinType")
+    return BuiltinType(name: String(self.name))
+  }
 
   private init(name: String) {
     self.name = name
@@ -80,13 +98,20 @@ public final class BuiltinType: TypeBase {
 
 /// A type variable used during type checking.
 public final class TypeVariable: TypeBase {
+  override public func copy() -> TypeVariable {
+		// print("TypeVariable")
+    TypeVariable.nextID -= 1
+    var v = TypeVariable()
+    v.id = Int(self.id)
+    return v
+  }
 
   public override init() {
     self.id = TypeVariable.nextID
     TypeVariable.nextID += 1
   }
 
-  public let id: Int
+  public var id: Int
   private static var nextID = 0
 
   public override var hashValue: Int {
@@ -101,6 +126,10 @@ public final class TypeVariable: TypeBase {
 
 /// Class to represent function types.
 public final class FunctionType: TypeBase {
+  override public func copy() -> FunctionType {
+    print("FunctionType")
+    return FunctionType(domain: self.domain.copy(), codomain: self.codomain.copy())
+  }
 
   internal init(domain: TupleType, codomain: TypeBase) {
     self.domain = domain
@@ -120,8 +149,12 @@ public final class FunctionType: TypeBase {
 
 /// Class to represent tuple types.
 public final class TupleType: TypeBase {
+  override public func copy() -> TupleType {
+    print("TupleType")
+    return TupleType(label: (self.label != nil) ? String(label!) : nil, elements: self.elements.map { $0.copy() })
+  }
 
-  internal init(label: String?, elements: [TupleTypeElem]) {
+  public init(label: String?, elements: [TupleTypeElem]) {
     self.label = label
     self.elements = elements
   }
@@ -157,6 +190,11 @@ public final class TupleType: TypeBase {
 
 /// The element of a tuple type.
 public struct TupleTypeElem: Equatable, CustomStringConvertible {
+  public func copy() -> TupleTypeElem {
+		print("TupleTypeElem")
+    print(self, self.label, self.type)
+    return TupleTypeElem(label: (self.label != nil) ? String(label!) : nil, type: self.type.copy())
+  }
 
   public init(label: String?, type: TypeBase) {
     self.label = label
@@ -176,8 +214,23 @@ public struct TupleTypeElem: Equatable, CustomStringConvertible {
 
 }
 
+extension Set {
+    func setmap<U>(transform: (Element) -> U) -> Set<U> {
+        return Set<U>(self.map(transform))
+    }
+}
+
 /// Class to represent union types.
 public final class UnionType: TypeBase {
+  override public func copy() -> UnionType {
+		print("UnionType")
+
+    /* for t in self.cases { */
+    /*     print("- ", t) */
+    /* } */
+    /* print() */
+    return UnionType(cases: try self.cases.setmap { $0 })
+  }
 
   internal init(cases: Set<TypeBase>) {
     self.cases = cases
