@@ -258,7 +258,7 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
 
   public func visit(_ node: Tuple) throws {
 		// print("DUMPER: Tuple", node.module)
-    self <<< indent <<< "(tuple" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    self <<< indent <<< "(tuple" 
     self <<< " type='" <<< node.type <<< "'"
     if let label = node.label {
       self <<< " '\(label)'"
@@ -298,6 +298,7 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   public func visit(_ node: Ident) {
 		// print("DUMPER: Ident", node.module)
     self <<< indent <<< "(ident '\(node.name)'" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    self <<< " symbol='" <<< node.symbol <<< "'"
     self <<< " type='" <<< node.type <<< "'"
     self <<< " scope='" <<< node.scope <<< "'"
     self <<< " scopeid='" <<< node.scope?.id <<< "'"

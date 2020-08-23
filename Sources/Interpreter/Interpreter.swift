@@ -3,7 +3,6 @@ import Parser
 import Sema
 import Foundation
 
-
 public struct Interpreter {
 
   public init(debug: Bool = false) {
@@ -12,11 +11,11 @@ public struct Interpreter {
     self.symbolCreator = SymbolCreator(context: astContext)
     self.nameBinder = NameBinder(context: astContext)
     self.constraintCreator = ConstraintCreator(context: astContext)
-    print("--------------------------------------------------")
-    for (symbol, function) in astContext.builtinScope.semantics {
-      print("??????????", symbol.name, symbol.type, symbol.scope.id)
-    }
-    print("--------------------------------------------------")
+    /* print("--------------------------------------------------") */
+    /* for (symbol, function) in astContext.builtinScope.semantics { */
+    /*   print("??????????", symbol.name, symbol.type, symbol.scope.id) */
+    /* } */
+    /* print("--------------------------------------------------") */
   }
 
   /// Whether or not the interpreter is in debug mode.
@@ -30,151 +29,123 @@ public struct Interpreter {
   private let constraintCreator: ConstraintCreator
 
   private var inputMod: String = ""
+  private var replaceIn: [String: Value] = [:]
 
   // Load a module from a text input.
   @discardableResult
   public mutating func loadModule(fromString input: String) throws -> Module {
     // Parse the module into an untyped AST.
     let parser = try Parser(source: input)
-    let module = try parser.parseModule()
+    var module = try parser.parseModule()
 
     // Run semantic analysis to get the typed AST.
-    let typedModule = try runSema(on: module) as! Module
-    astContext.modules.append(typedModule)
+    module = try runSema(on: module) as! Module
+    astContext.modules.append(module)
 
     return module
   }
 
   // Evaluate an expression from a text input, within the currently loaded context.
   public mutating func eval(string input: String, replace: [String: Value] = [:]) throws -> Value {
-    print("oh")
-    print("mdrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
-    print("mdrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
-    let cpy = astContext.modules[0].copy()
-    print("cpyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy")
+    /* let cpy = astContext.modules[0].copy() */
+    // print("cpyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy")
     let dumper = ASTDumper(outputTo: Console.out)
     /* astContext.modules.removeFirst() */
     /*   astContext.modules.append(cpy) */
-      print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
-      print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
-      print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
-      print(cpy)
-      cpy.statements.forEach { print($0.module) }
-      astContext.modules[0].statements.forEach { print($0.module) }
-      print(astContext.modules[0])
-      dumper.dump(ast: astContext.modules[0])
-      print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
-      print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
-      print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
+      /* print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP") */
+      /* print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP") */
+      /* print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP") */
+      /* print(cpy) */
+      /* cpy.statements.forEach { print($0.module) } */
+      /* astContext.modules[0].statements.forEach { print($0.module) } */
+      /* print(astContext.modules[0]) */
+      /* dumper.dump(ast: astContext.modules[0]) */
+      /* print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP") */
+      /* print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP") */
+      /* print("POPOPOPOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP") */
     /* try loadModule(fromString: inputMod) */
     
     // Parse the epxression into an untyped AST.
     let parser = try Parser(source: input)
     let expr = try parser.parseExpr()
 
+    if(replace.count > 1000000) {
+    // print("hmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm")
+    replace.forEach { 
+      switch $0.value {
+      case .function(var f, let closure):
+        /* f.symbol?.scope.symbols.forEach { print(" - ", $0.key, $0.value) } */
+        for fff in (f.scope?.symbols)! {
+          closure.forEach {
+            for s in ($0.key.scope.symbols) {
+              s.value.forEach {
+                /* if f.symbol?.scope.symbols[$0.name] == nil { */
+                /*   f.symbol?.scope.symbols[$0.name] = [] */
+                /* } */
+                /* f.symbol?.scope.symbols[$0.name]?.append($0) */
+                if(fff.key == $0.name) {
+
+                  /* print("aaaaaaaaaaaa", $0.name, fff.key, fff.value[0].hashValue, $0.hashValue, $0.type) */
+                  /* assertionFailure() */
+                }
+              }
+            }
+            /* f.symbol?.scope.symbols[$0.key.name]? */
+            /* .append($0.key) */
+            /* f.symbol?.scope.symbols[$0.key.name].append($0.key) */
+          }
+        }
+        /* print("aaa", f.scope?.symbols.count) */
+        
+        /* f.symbol?.scope.symbols.forEach { print(" - ", $0.key, $0.) } */
+        break
+      default:
+        break
+      }
+    }
+      /* assertionFailure() */
+    }
+
     // Expressions can't be analyzed nor ran out-of-context, they must be nested in a module.
-    let module = Module(statements: [expr], range: expr.range)
+    var module = Module(statements: [expr], range: expr.range)
+    // print("\n\n\n\n\n\n\n")
+    // print("REPLAAAAAAAAAAAAAAAAAAAAAAAAAAAAACE")
+
+    let rep = Replace(replace: replace, type: false)
+    var ast = try rep.transform(module)
+    replaceIn = replace
+
+    // dumper.dump(ast: module)
+    // print("REPLAAAAAAAAAAAAAAAAAAAAAAAAAAAAACE")
+    // print("\n\n\n\n\n\n\n")
+    if replace.count > 0 {
+      /* assertionFailure() */
+    }
     // Run semantic analysis to get the typed AST.
     let typedModule = try runSema(on: module, replace: replace) as! Module
-    print("---------------***************---------------********************")
-    dumper.dump(ast: module)
-    print("---------------***************---------------********************")
+    // print("---------------***************---------------********************")
+    // dumper.dump(ast: module)
+    // print("---------------***************---------------********************")
 
     /* let dumper = ASTDumper(outputTo: Console.out) */
     /* dumper.dump(ast: typedModule) */
-    let owo = eval(expression: typedModule.statements[0] as! Expr)
-
-    return owo
-
-    switch owo {
-    case .int, .bool, .real, .string:
-      let parser2 = try Parser(source: owo.description)
-      var expr2 = try parser2.parseExpr()
-      /* let dumper = ASTDumper(outputTo: Console.out) */
-      /* expr2.module = //astContext.modules[0].copy() */
-      expr2.type = BuiltinType.int
-      return expr2
-      /* let mmm = Module(statements: [expr2], range: expr2.range) as! Expr */
-
-    case .tuple(let e, let label, let elements):
-      return e
-
-    case .function(var f, let aaa):
-      var rep: [String: Expr] = [:]
-      /* aaa.forEach { */
-      for bbb in aaa {
-        switch bbb.value  {
-        case .int, .bool, .real, .string:
-          let parser2 = try Parser(source: bbb.value.description)
-          var expr2 = try parser2.parseExpr()
-          /* rep[bbb.key.name] = Module(statements: [expr2], range: expr2.range) as! Expr */
-          expr2.module = f.module
-          rep[bbb.key.name] = expr2
-            print("mod v", rep[bbb.key.name]?.module)
-        case .tuple(let e, _, _):
-            rep[bbb.key.name] = e
-            /* rep[bbb.key.name]?.module = e.module */
-            print("mod e", rep[bbb.key.name]?.module)
-        case .function(var fff, _):
-            rep[bbb.key.name] = fff
-            print("mod f", fff.module, rep[bbb.key.name]?.module)
-          default:
-              /* print("   ", $0.key.name, $0.value) */
-            break
-        }
+    let ret = eval(expression: typedModule.statements[0] as! Expr, replaceContext: rep.evalContext.copy)
+      switch ret {
+      case .function(let f, let closure):
+        break
+      default:
+        break
       }
-      /* let cpy = f.body.copy() as! Expr */
-      print("00000000")
-      print("rep", rep.count)
-      let dumper = ASTDumper(outputTo: Console.out)
-      dumper.dump(ast: f)
-      normalizer.replace = rep
-      let ast = f.copy()
-      print("****************")
-      print("****************")
-      print("****************")
-      print(f.body.type)
-      f.body.module.statements.forEach { print($0.module) }
-      print("****************")
-      print("****************")
-      print("****************")
-      print("issouuuuuuuuuuu")
-      print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaae")
-      print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaae")
-      print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaae")
-      print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", rep)
-      ast.body = try normalizer.transform(ast.body.copy()) as! Expr
-      normalizer.replace = [:]
-      print("dooooooooooooooooooooooooooooone")
-
-      /* astContext.modules[0] = cpy */
-      /* dumper.dump(ast: astContext.modules[0]) */
-      print("LAAAAAAAAAAAAAST CHEEEEEEEEEEEEEEEEECK")
-      print("LAAAAAAAAAAAAAST CHEEEEEEEEEEEEEEEEECK")
-      print("LAAAAAAAAAAAAAST CHEEEEEEEEEEEEEEEEECK")
-      print(ast.body.type)
-      print(ast.body.module)
-      ast.body.module.statements.forEach { print($0.module) }
-      dumper.dump(ast: ast)
-      print("LAAAAAAAAAAAAAST CHEEEEEEEEEEEEEEEEECK")
-      print("LAAAAAAAAAAAAAST CHEEEEEEEEEEEEEEEEECK")
-      print("LAAAAAAAAAAAAAST CHEEEEEEEEEEEEEEEEECK")
-      /* dumper.dump(ast: astContext.modules[0]) */
-      /* astContext.modules[0] = modCopy */
-      /* let moduleTest = Module(statements: [f], range: expr.range) */
-      return ast
-    default: break
-    }
-
-    return nil
+    replaceIn = [:]
+    return ret
   }
 
-  public func eval(expression: Expr) -> Value {
+  public func eval(expression: Expr, replaceContext: EvaluationContext = [:]) -> Value {
     // Initialize an evaluation context with top-level symbols from built-in and loaded modules.
     let evalContext: EvaluationContext = [:]
     for (symbol, function) in astContext.builtinScope.semantics {
       evalContext[symbol] = .builtinFunction(function)
-      print(" /", symbol.name, symbol.type, symbol.scope.id)
+      // print(" /", symbol.name, symbol.type, symbol.scope.id)
     }
 
       /* for (symbol, function) in expression.module.functions { */
@@ -187,35 +158,35 @@ public struct Interpreter {
       let dumper = ASTDumper(outputTo: Console.out)
       /* dumper.dump(ast: module) */
       for (symbol, function) in module.functions {
-        print("  -", symbol.name, symbol.scope.id, function.module)
+        // print("  -", symbol.name, symbol.scope.id, function.module)
         evalContext[symbol] = .function(function, closure: [:])
       }
     }
 
+    evalContext.merge(replaceContext, uniquingKeysWith: { _, rhs in rhs })
     // Evaluate the expression.
     return eval(expression, in: evalContext)
   }
 
   private func eval(_ expr: Expr, in evalContext: EvaluationContext) -> Value {
     switch expr {
-    case let e as Func          : print("111111111111111"); return eval(e, in: evalContext)
-    case let e as If            : print("22222222222");  return eval(e, in: evalContext)
-    case let e as Match         : print("33333333333"); return eval(e, in: evalContext)
-    case let e as Call          : print("44444444444"); return eval(e, in: evalContext)
-    case let e as Tuple         : print("55555555555"); return eval(e, in: evalContext)
-    case let e as Select        : print("66666666"); return eval(e, in: evalContext)
-    case let e as Ident         : print("777777777"); return eval(e, in: evalContext)
-    case let e as Scalar<Bool>  : print("88888888888888"); return .bool(e.value)
-    case let e as Scalar<Int>   : print("999999999999 ; \(e.value)'"); return .int(e.value)
-    case let e as Scalar<Double>: print("aaaaaaaa"); return .real(e.value)
-    case let e as Scalar<String>: print("bbbbbbbb"); return .string(e.value)
+    case let e as Func          : return eval(e, in: evalContext)
+    case let e as If            : return eval(e, in: evalContext)
+    case let e as Match         : return eval(e, in: evalContext)
+    case let e as Call          : return eval(e, in: evalContext)
+    case let e as Tuple         : return eval(e, in: evalContext)
+    case let e as Select        : return eval(e, in: evalContext)
+    case let e as Ident         : return eval(e, in: evalContext)
+    case let e as Scalar<Bool>  : return .bool(e.value)
+    case let e as Scalar<Int>   : return .int(e.value)
+    case let e as Scalar<Double>: return .real(e.value)
+    case let e as Scalar<String>: return .string(e.value)
     default:
-      print("222222222222222")
-      print((expr as! Scalar<Int>).value)
+      // print("222222222222222")
+      // print((expr as! Scalar<Int>).value)
       /* print(.i(expr as! Scalar<Int>).value)) */
       fatalError()
     }
-
   }
     /* for mod in astContext.modules { */
     /*   let dumper = ASTDumper(outputTo: Console.out) */
@@ -229,21 +200,22 @@ public struct Interpreter {
     /* print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") */
 
   public func eval(_ expr: Func, in evalContext: EvaluationContext) -> Value {
-    let closure = evalContext.copy
+    var closure = evalContext.copy
+    /* if let new = replaceIn[expr.name!] { */
+    /*   switch new { */
+    /*   case .function(let f, let cloclo): */
+    /*     closure.merge(cloclo) { _, rhs in rhs } */
+    /*   default: */
+    /*     break */
+    /*   } */
+    /* } */
     let value = Value.function(expr, closure: closure)
-    print()
-    print("------------")
     let mod = expr.module!
       let dumper = ASTDumper(outputTo: Console.out)
       for (symbol, function) in mod.functions {
-        print("  -", symbol.name, symbol.scope.id, function.module)
+        // print("  -", symbol.name, symbol.scope.id, function.module)
       }
     
-    closure.forEach { if($0.key.name == "toNat") {print("  *", $0.key.name, $0.key.type, $0.key, expr.type)}}
-    print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-    print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-    print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-    print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
     closure[expr.symbol!] = value
     /* let issou = eval(expr.body, in: closure) */
     
@@ -329,27 +301,66 @@ public struct Interpreter {
 
   public func eval(_ expr: Call, in evalContext: EvaluationContext) -> Value {
     // Evaluate the callee and its arguments.
-    let dumper = ASTDumper(outputTo: Console.out)
-    dumper.dump(ast: expr)
-    var callee = eval(expr.callee, in: evalContext)
+    /* let dumper = ASTDumper(outputTo: Console.out) */
+    /* dumper.dump(ast: expr) */
+
+    var callee =  eval(expr.callee, in: evalContext) //Value
     let arguments = expr.arguments.map { eval($0.value, in: evalContext) }
+    switch expr.callee {
+    case let n as Func:
+      /* [> print("MDRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRr") <] */
+      /* [> print(n.name) <] */
+      /* [> evalContext.forEach { print(" - ", $0.key.name, $0.value, $0.key) } <] */
+      /* [> print("XDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDd") <] */
+      if let new = replaceIn[n.name!] {
+        switch new {
+        case .function(let f, let closure):
+          /* [> [> expr.callee = f <] <] */
+          /* [> [> let cont = evalContext.merging(closure, uniquingKeysWith: { _, rhs in rhs }) <] <] */
+          let funcContext = evalContext.copy.merging(closure) { _, rhs in rhs }
+          for (parameter, argument) in zip(f.signature.domain.elements, arguments) {
+            if let name = parameter.name {
+              let symbols = f.innerScope!.symbols[name]!
+              assert(symbols.count == 1)
+              funcContext[symbols[0]] = argument
+            }
+          }
+          // Evaluate the function's body.
+          // print("before eval", n.name)
+          let ret = eval(f.body, in: funcContext)
+          /* assertionFailure() */
+          // print(ret)
+          return ret
+
+        default:
+          callee = eval(expr.callee, in: evalContext)
+          break
+        }
+      }
+      else {
+        callee = eval(expr.callee, in: evalContext)
+      }
+    default:
+      callee = eval(expr.callee, in: evalContext)
+      break
+    }
 
     switch callee {
     case .builtinFunction(let function):
-      print("issou")
+      // print("issou")
       let swiftArguments = arguments.compactMap { $0.swiftValue }
-      print("pouloulou")
+      // print("pouloulou")
       assert(swiftArguments.count == arguments.count)
 
-      swiftArguments.forEach { print("-", $0, type(of: $0)) }
-      print("function", type(of: function))
-      dump(function)
-      print("eval test", function([1 as Any, 2 as Any]))
-      print(function(swiftArguments))
-      print("sad")
+      /* swiftArguments.forEach { print("-", $0, type(of: $0)) } */
+      // print("function", type(of: function))
+      /* dump(function) */
+      // print("eval test", function([1 as Any, 2 as Any]))
+      // print(function(swiftArguments))
+      // print("sad")
 
       let aaa = Value(value: function(swiftArguments))!
-      print("test")
+      // print("test")
       return aaa
 
     case .function(let function, let closure):
@@ -398,26 +409,31 @@ public struct Interpreter {
   }
 
   public func eval(_ expr: Ident, in evalContext: EvaluationContext) -> Value {
-    print("&&&&&&&&&&&&")
-    guard let sym = expr.symbol
-      else { fatalError("invalid expression: missing symbol") }
+    // print("&&&&&&&&&&&&", expr.name, expr.symbol?.name)
 
-    let dumper = ASTDumper(outputTo: Console.out)
-    dumper.dump(ast: expr.module)
+
+    /* evalContext.forEach { if($0.key.name == "eq") {print("  *", $0.key.name, $0.key.type, $0.key.scope.id, expr.symbol) } } */
+
+
+    guard let sym = expr.symbol
+      else { print("rip", expr.name, expr.symbol); fatalError("invalid expression: missing symbol") }
+
+    /* let dumper = ASTDumper(outputTo: Console.out) */
+    /* dumper.dump(ast: expr.module) */
 
     // Look for the identifier's symbol in the evaluation context.
     /*   if(sym.name == "bar"){ */
-    /* evalContext.forEach { if($0.key.name == "bar") {print("  *", $0.key.name, $0.key.type == sym.type, $0.key.scope.id, */
-    /* sym.scope.id, sym.name, sym.hashValue, $0.key.hashValue, $0.key == sym )} }} */
+    /* evalContext.forEach { if($0.key.name == "op") {print("  *", $0.key.name, $0.key.type == sym.type, $0.key.scope.id, */
+    /* sym.scope.id, sym.name, sym.hashValue, $0.key.hashValue, $0.key == sym );  } } */
     guard let value = evalContext[sym]
       else { fatalError("invalid expression: unbound identifier '\(expr.name)'") }
-    print("ééééééééééé")
-    print(value)
+    // print("ééééééééééé")
+    // print(value)
     return value
   }
 
   // Perform type inference on an untyped AST.
-  private func runSema(on module: Module, replace: [String: Expr] = [:]) throws -> Node {
+  private func runSema(on module: Module, replace: [String: Value] = [:]) throws -> Node {
     /* for (symbol, function) in astContext.builtinScope.semantics { */
     /*   print("///", symbol.name, symbol.type, symbol.scope.id) */
     /* } */
@@ -426,19 +442,19 @@ public struct Interpreter {
     /*   rep[r.key] = r.value.copy() */
     /*   rep[r.key]!.module = module */
     /* } */
-      
-    print("//////////////////////")
-    normalizer.replace = replace
+    
+    let dumper = ASTDumper(outputTo: Console.out)
+    // print("//////////////////////")
     var ast = try normalizer.transform(module)
-    normalizer.replace = [:]
-    print("\\\\\\\\\\\\\\\\\\\\\\\\")
-    /* let dumper = ASTDumper(outputTo: Console.out) */
-    /* dumper.dump(ast: module) */
+    // print("\\\\\\\\\\\\\\\\\\\\\\\\")
+    // dumper.dump(ast: module)
+    if replace.count > 0 {
+        /* assertionFailure() */
+    }
 
-    try symbolCreator.visit(ast)
-    try nameBinder.visit(ast)
-    try constraintCreator.visit(ast)
-
+    try symbolCreator.visit(module)
+    try nameBinder.visit(module)
+    try constraintCreator.visit(module)
 
     if debug {
       for constraint in astContext.typeConstraints {
@@ -446,8 +462,11 @@ public struct Interpreter {
       }
       print()
     }
-    print("PFIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIEX")
-
+    // dumper.dump(ast: module)
+    // print("PFIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIEX")
+    if replace.count > 0 {
+        /* assertionFailure() */
+    }
 
     var solver = ConstraintSolver(constraints: astContext.typeConstraints, in: astContext)
     let result = solver.solve()
@@ -455,9 +474,10 @@ public struct Interpreter {
     switch result {
     case .success(let solution):
       let dispatcher = Dispatcher(context: astContext, solution: solution)
-      ast = try dispatcher.transform(ast) as! Module
+      ast = try dispatcher.transform(module) as! Module
 
     case .failure(let errors):
+      // print("help wtf ???????")
       for error in errors {
         astContext.add(
           error: SAError.unsolvableConstraint(constraint: error.constraint, cause: error.cause),
@@ -465,8 +485,13 @@ public struct Interpreter {
       }
     }
 
-    guard astContext.errors.isEmpty
-      else { throw InterpreterError.staticFailure(errors: astContext.errors) }
+    /* dumper.dump(ast: module) */
+    /* if replace.count > 0 { */
+    /*     assertionFailure() */
+    /* } */
+    // TODO
+    /* guard astContext.errors.isEmpty */
+    /*   else { throw InterpreterError.staticFailure(errors: astContext.errors) } */
     astContext.typeConstraints.removeAll()
     return ast
   }

@@ -35,10 +35,10 @@ extension Value {
   /// Swift native type (e.g. `Int`).
   var swiftValue: Any? {
     switch self {
-    case .bool(let value)   : print("pppp");return value
-    case .int (let value)   : print("qqqq", type(of: value), value);return value
-    case .real(let value)   : print("rrrr");return value
-    case .string(let value) : print("ssss");return value
+    case .bool(let value)   : return value
+    case .int (let value)   : return value
+    case .real(let value)   : return value
+    case .string(let value) : return value
     default                 : return nil
     }
   }
@@ -50,7 +50,7 @@ extension Value: CustomStringConvertible {
   public var description: String {
     switch self {
     case .bool(let value):
-      print("vvvvvvvvvvvvvvvvvvv")
+      /* print("vvvvvvvvvvvvvvvvvvv") */
       return value.description
 
     case .int(let value):

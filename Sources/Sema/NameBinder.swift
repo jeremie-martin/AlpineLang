@@ -7,6 +7,8 @@ public final class NameBinder: ASTVisitor, SAPass {
     self.context = context
   }
 
+  public let replace: [String: Expr] = [:]
+
   /// The AST context.
   public let context: ASTContext
 

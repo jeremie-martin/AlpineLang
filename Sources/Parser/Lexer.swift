@@ -6,8 +6,7 @@ import Utils
 /// Lexer for the tokens of the Alpine language.
 public struct Lexer {
 
-  public init(source: TextInputBuffer, replace: [String: String] = [:]) throws {
-    self.replace = replace
+  public init(source: TextInputBuffer) throws {
     currentLocation = SourceLocation(source: source)
     characters = try source.read().unicodeScalars
     charIndex = characters.startIndex
@@ -72,8 +71,6 @@ public struct Lexer {
       ? characters[charIndex]
       : nil
   }
-
-  var replace: [String: String]
 
   /// The stream of characters.
   var characters: String.UnicodeScalarView
@@ -181,7 +178,7 @@ extension Lexer: IteratorProtocol, Sequence {
       case "else" : kind = .else
       case "match": kind = .match
       case "with" : kind = .with
-      default     : kind = .identifier; if let val = replace[chars] { value = val } else { value = chars }
+      default     : kind = .identifier; value = chars
       }
 
       return Token(kind: kind, value: value, range: range(from: startLocation))
@@ -306,7 +303,7 @@ func isDigit(_ char: UnicodeScalar) -> Bool {
 
 /// Returns whetehr or not the given character is an alphanumeric characters, or `_`.
 func isAlnumOrUnderscore(_ char: UnicodeScalar) -> Bool {
-  return char == "_" || CharacterSet.alphanumerics.contains(char)
+  return (char == "_") || (char == "@") || (CharacterSet.alphanumerics.contains(char))
 }
 
 /// Set of operator symbols.

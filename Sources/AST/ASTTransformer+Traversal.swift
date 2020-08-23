@@ -143,12 +143,6 @@ public extension ASTTransformer {
   }
 
   func transform(_ node: Ident) -> Node {
-    /* if let new = replace[node.name] { */
-    /*   return new */
-    /* } */
-    if (node.name == "x") {
-      return Tuple(label: "MyFalse", elements: [], module: node.module, range: node.range)
-    }
     return node
   }
 

@@ -41,21 +41,8 @@ public final class Dispatcher: ASTTransformer {
       solution.reify(type: $0, in: context, skipping: &visited)
     }
 
-    /* let dumper = ASTDumper(outputTo: Console.out) */
-    /* dumper.dump(ast: node) */
-
     // Reify the types of the symbols in the scope of the function.
-    print("---------------")
-    print(node.type)
-    print(node.symbol?.type)
     node.innerScope.map { reifyScopeSymbols(of: $0) }
-    /* print(node.type) */
-    /* print(node.symbol?.type) */
-    /* print(node.type == node.symbol?.type) */
-    /* for constraint in context.typeConstraints { */
-    /*   constraint.prettyPrint() */
-    /* } */
-    /* print() */
     assert(node.type == node.symbol?.type)
 
     node.signature = try transform(node.signature) as! FuncSign

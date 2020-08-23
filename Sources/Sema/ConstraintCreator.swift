@@ -23,6 +23,7 @@ public struct Console: TextOutputStream {
 
 }
 
+
 public final class ConstraintCreator: ASTVisitor, SAPass {
 
   public init(context: ASTContext) {

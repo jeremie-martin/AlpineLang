@@ -35,8 +35,8 @@ public class TypeBase: Hashable, CustomStringConvertible {
 /// Class to represent the description of a type.
 public final class Metatype: TypeBase {
   override public func copy() -> Metatype {
-		print("Metatype")
-    print("so", self.type)
+		// print("Metatype")
+    // print("so", self.type)
     let m = Metatype(of: self.type.copy())
     return m
   }
@@ -56,7 +56,7 @@ public final class Metatype: TypeBase {
 /// A special type that's used to represent a typing failure.
 public final class ErrorType: TypeBase {
   override public func copy() -> ErrorType {
-    print("ErrorType")
+    // print("ErrorType")
     return self
   }
 
@@ -71,7 +71,7 @@ public final class ErrorType: TypeBase {
 /// Class to represent the built-in types.
 public final class BuiltinType: TypeBase {
   override public func copy() -> BuiltinType {
-		print("BuiltinType")
+		// print("BuiltinType")
     return BuiltinType(name: String(self.name))
   }
 
@@ -127,7 +127,7 @@ public final class TypeVariable: TypeBase {
 /// Class to represent function types.
 public final class FunctionType: TypeBase {
   override public func copy() -> FunctionType {
-    print("FunctionType")
+    // print("FunctionType")
     return FunctionType(domain: self.domain.copy(), codomain: self.codomain.copy())
   }
 
@@ -150,7 +150,7 @@ public final class FunctionType: TypeBase {
 /// Class to represent tuple types.
 public final class TupleType: TypeBase {
   override public func copy() -> TupleType {
-    print("TupleType")
+    // print("TupleType")
     return TupleType(label: (self.label != nil) ? String(label!) : nil, elements: self.elements.map { $0.copy() })
   }
 
@@ -191,8 +191,8 @@ public final class TupleType: TypeBase {
 /// The element of a tuple type.
 public struct TupleTypeElem: Equatable, CustomStringConvertible {
   public func copy() -> TupleTypeElem {
-		print("TupleTypeElem")
-    print(self, self.label, self.type)
+		// print("TupleTypeElem")
+    // print(self, self.label, self.type)
     return TupleTypeElem(label: (self.label != nil) ? String(label!) : nil, type: self.type.copy())
   }
 
@@ -223,7 +223,7 @@ extension Set {
 /// Class to represent union types.
 public final class UnionType: TypeBase {
   override public func copy() -> UnionType {
-		print("UnionType")
+		// print("UnionType")
 
     /* for t in self.cases { */
     /*     print("- ", t) */

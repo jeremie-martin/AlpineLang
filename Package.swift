@@ -7,11 +7,9 @@ let package = Package(
     .executable(name: "alpine", targets: ["alpine"]),
     .library(name: "AlpineLib", targets: ["AlpineLib"]),
   ],
-  dependencies: [
-    .package(url: "https://github.com/kyouko-taiga/ArgParse.git", from: "1.1.0"),
-  ],
+  dependencies: [],
   targets: [
-    .target(name: "alpine", dependencies: ["AlpineLib", "ArgParse"]),
+    .target(name: "alpine", dependencies: ["AlpineLib"]),
     .target(name: "AlpineLib", dependencies: ["AST", "Interpreter", "Parser", "Sema"]),
     .target(name: "AST", dependencies: ["Utils"]),
     .target(name: "Interpreter", dependencies: ["AST", "Parser", "Sema"]),

@@ -14,8 +14,8 @@ public class Parser {
   }
 
   /// Initializes a parser from a text input.
-  public convenience init(source: TextInputBuffer, replace: [String: String] = [:]) throws {
-    self.init(try Lexer(source: source, replace: replace))
+  public convenience init(source: TextInputBuffer) throws {
+    self.init(try Lexer(source: source))
   }
 
   /// Parses the token stream into a module declaration.
@@ -98,7 +98,7 @@ public class Parser {
   }
 
   /// The stream of tokens.
-  public var stream: [Token]
+  var stream: [Token]
   /// The current position in the token stream.
   var streamPosition: Int = 0
   /// The module being parser.

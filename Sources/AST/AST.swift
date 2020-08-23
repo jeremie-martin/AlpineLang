@@ -35,7 +35,7 @@ public class Node: Equatable {
 public final class Module: Node {
   override public func copy() -> Module {
     // print("AST: Module", self.module)
-    self.statements.forEach { print($0.module) }
+    /* self.statements.forEach { print($0.module) } */
     // print("AST: Module 2", self.module)
     let mod = Module(statements: [], range: self.range.copy())
     // print("AST: Module 3", self.module)
@@ -85,13 +85,21 @@ public final class Func: Expr {
     // print("AST: Func 4", self.module)
     f.symbol = self.symbol?.copy(scope: self.symbol?.scope.copy())
     // print("AST: Func 5", self.module)
-    print(self.symbol?.scope, self.symbol?.name, self.symbol?.type)
-    print(f.symbol)
-    print(f.symbol?.name)
-    print(f.symbol?.type)
-    print(f.symbol?.scope)
+    // print(self.symbol?.scope, self.symbol?.name, self.symbol?.type)
+    // print(f.symbol)
+    // print(f.symbol?.name)
+    // print(f.symbol?.type)
+    // print(f.symbol?.scope)
     f.innerScope = self.innerScope?.copy()
     // print("AST: Func 6", self.module)
+    return f
+  }
+
+  public func cpy() -> Func {
+    var f = Func(name: name, signature: signature, body: body, module: module, range: range)
+    f.type = type
+    f.symbol = symbol
+    f.innerScope = innerScope
     return f
   }
 
@@ -100,13 +108,17 @@ public final class Func: Expr {
     signature: FuncSign,
     body: Expr,
     module: Module,
-    range: SourceRange)
+    range: SourceRange,
+    idContext: Int = -1)
   {
     self.name = name
     self.signature = signature
     self.body = body
+    self.idContext = idContext
     super.init(module: module, range: range)
   }
+
+  public var idContext: Int
 
   /// The (optional) name of the function.
   public var name: String?
@@ -139,14 +151,14 @@ public final class TypeAlias: Node {
     // print("AST: TypeAlias 3", self.module)
     e.symbol = self.symbol?.copy(scope: fff)
     // print("AST: TypeAlias 4", self.module)
-    print("hahahahaha")
+    // print("hahahahaha")
     // print("AST: TypeAlias 5", self.module)
-    e.scope?.symbols.forEach { print("Symbol:", $0.key, $0.value); $0.value.forEach { print("  val:", $0.scope, $0.scope.id, $0.type)} }
+    /* e.scope?.symbols.forEach { print("Symbol:", $0.key, $0.value); $0.value.forEach { print("  val:", $0.scope, $0.scope.id, $0.type)} } */
     // print("AST: TypeAlias 6", self.module)
-    print("hrlooo")
+    // print("hrlooo")
     // print("AST: TypeAlias 7", self.module)
-    print(self.symbol?.scope)
-    print(e.symbol?.scope)
+    // print(self.symbol?.scope)
+    // print(e.symbol?.scope)
     return e
   }
 
@@ -248,7 +260,7 @@ public final class TupleSign: TypeSign {
     // print("AST: TupleSign 2", self.module)
     var e = TupleSign(label: l, elements: try self.elements.map { $0.copy() }, module: self.module, range: self.range.copy())
     // print("AST: TupleSign 3", self.module)
-    print("hhh2", self.type, self.type?.type)
+    // print("hhh2", self.type, self.type?.type)
     // print("AST: TupleSign 4", self.module)
     e.type = self.type?.copy()
     // print("AST: TupleSign 5", self.module)
@@ -584,19 +596,19 @@ public final class Arg: Expr {
 public final class Tuple: Expr {
   override public func copy() -> Tuple {
     // print("AST: Tuple", self.module)
-    print("1111111111111111111111111111111111111111111111")
+    // print("1111111111111111111111111111111111111111111111")
     // print("AST: Tuple 2", self.module)
     let l = (self.label != nil) ? String(self.label!) : nil
     // print("AST: Tuple 3", self.module)
-    print("22222222222222222222222222222222222222222222222:", self.elements)
+    // print("22222222222222222222222222222222222222222222222:", self.elements)
     // print("AST: Tuple 4", self.module)
     var e = Tuple(label: l, elements: try self.elements.map { $0.copy() }, module: self.module, range: self.range.copy())
     // print("AST: Tuple 5", self.module)
-    print("3333333333333333333333333333333333333333333333333333")
+    // print("3333333333333333333333333333333333333333333333333333")
     // print("AST: Tuple 6", self.module)
     e.type = self.type?.copy()
     // print("AST: Tuple 7", self.module)
-    print("444444444444444444444444444444444444444444")
+    // print("444444444444444444444444444444444444444444")
     return e
   }
 
@@ -718,9 +730,9 @@ public final class Ident: Expr {
 public final class Scalar<T>: Expr {
   override public func copy() -> Scalar<T> {
     // print("AST: Scalar", self.module)
-    print(self.value)
+    // print(self.value)
     // print("AST: Scalar 2", self.module)
-    print(module)
+    // print(module)
     // print("AST: Scalar 3", self.module)
     var e = Scalar<T>(value: self.value, module: module, range: self.range.copy()) 
     // print("AST: Scalar 4", self.module)
