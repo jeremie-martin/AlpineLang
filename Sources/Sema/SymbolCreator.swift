@@ -10,17 +10,16 @@ import Utils
 ///
 /// This pass must be ran before name binding can take place.
 public final class SymbolCreator: ASTVisitor, SAPass {
+  // Lifecycle
 
   public init(context: ASTContext) {
     self.context = context
   }
 
+  // Public
+
   /// The AST context.
   public let context: ASTContext
-  /// A stack of scopes used to determine in which one a new symbol should be created.
-  private var scopes: Stack<Scope> = []
-  /// The error symbol.
-  private var errorSymbol: Symbol?
 
   public func visit(_ node: Module) throws {
     // Create a new scope for the module.
@@ -68,7 +67,11 @@ public final class SymbolCreator: ASTVisitor, SAPass {
 
     let domain = context.getTupleType(label: nil, elements: parameters)
     let funcType = context.getFunctionType(from: domain, to: TypeVariable())
-    node.symbol = scope!.create(name: node.name ?? "λ", type: funcType, overloadable: true)
+    node.symbol = scope!.create(
+      name: node.name ?? "λ",
+      type: funcType,
+      overloadable: true
+    )
 
     // Visit the function's body.
     try visit(node.body)
@@ -142,4 +145,10 @@ public final class SymbolCreator: ASTVisitor, SAPass {
     // where clauses.
   }
 
+  // Private
+
+  /// A stack of scopes used to determine in which one a new symbol should be created.
+  private var scopes: Stack<Scope> = []
+  /// The error symbol.
+  private var errorSymbol: Symbol?
 }

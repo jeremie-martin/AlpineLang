@@ -3,15 +3,21 @@ import Utils
 
 /// Transformer that normalizes the AST representation.
 public final class Replace: ASTTransformer {
+  // Lifecycle
 
-  public init(replace: [String : Value], type: Bool) {
+  public init(replace: [String: Value], replaceLambda: [String: String], type: Bool) {
     self.replace = replace
-    self.typeOnly = type
+    typeOnly = type
+    self.replaceLambda = replaceLambda
   }
 
+  // Public
+
   public var typeOnly: Bool
-  public let replace: [String : Value]
+  public let replace: [String: Value]
+  public let replaceLambda: [String: String]
   public var evalContext: EvaluationContext = [:]
+
   /* public var context: [Func: EvaluationContext] = [:] */
 
   /* public var replace: [String : Expr] { */
@@ -24,36 +30,41 @@ public final class Replace: ASTTransformer {
   /* } */
 
   public func transform(_ node: Binary) throws -> Node {
-    return Call(
+    Call(
       callee: node.op,
       arguments: [
         Arg(
-          label : nil,
-          value : try transform(node.left) as! Expr,
+          label: nil,
+          value: try transform(node.left) as! Expr,
           module: node.left.module,
-          range : node.left.range),
+          range: node.left.range
+        ),
         Arg(
-          label : nil,
-          value : try transform(node.right) as! Expr,
+          label: nil,
+          value: try transform(node.right) as! Expr,
           module: node.right.module,
-          range : node.right.range),
+          range: node.right.range
+        ),
       ],
       module: node.module,
-      range : node.range)
+      range: node.range
+    )
   }
 
   public func transform(_ node: Unary) throws -> Node {
-    return Call(
+    Call(
       callee: node.op,
       arguments: [
         Arg(
-          label : nil,
-          value : try transform(node.operand) as! Expr,
+          label: nil,
+          value: try transform(node.operand) as! Expr,
           module: node.operand.module,
-          range : node.operand.range),
+          range: node.operand.range
+        ),
       ],
       module: node.module,
-      range : node.range)
+      range: node.range
+    )
   }
 
   /* public func transform(_ node: Call) throws -> Node { */
@@ -73,20 +84,31 @@ public final class Replace: ASTTransformer {
 
   public func transform(_ node: Ident) throws -> Node {
     if let new = replace[node.name] {
-    // print("rippppppppppppppppppppppppp", node.name)
+      // print("rippppppppppppppppppppppppp", node.name)
       switch new {
       case .int:
-        return Scalar<Int>(value: new.swiftValue as! Int, module: node.module, range: node.range)
+        return Scalar<Int>(
+          value: new.swiftValue as! Int,
+          module: node.module,
+          range: node.range
+        )
       case .tuple(let e, _, _):
-        if typeOnly == true {
-          // print("odoododo", node.type)
-          node.type = e.type
-          // print("nodeType ???", node.type)
-          return node
-        }
+        return Tuple(
+          label: e.label,
+          elements: e.elements,
+          module: node.module,
+          range: e.range
+        )
         return e
       case .function(var f, let closure):
         /* return node */
+        return Func(
+          name: replaceLambda[node.name],
+          signature: f.signature,
+          body: f.body,
+          module: f.module,
+          range: f.range
+        )
         if typeOnly == true {
           // print("hmmmmmmmmmmmmmm")
           node.type = f.type
@@ -98,19 +120,24 @@ public final class Replace: ASTTransformer {
         /*   assertionFailure() */
         /*   [> f.scope?.symbols[$0.key.scope] = $0.key <] */
         /* } */
-        
-        
+
         let owo = f.copy()
-        owo.name = String(node.name)
+        owo.name = replaceLambda[node.name]!
+        // String(node.name)
         return owo
 
-        /* return issou */
+      /* return issou */
       default:
-        return node
+        assertionFailure()
+        let owo = node.copy()
+        owo.name = replaceLambda[node.name]!
+        return owo
       }
     }
     return node
   }
+
+  // Fileprivate
 
   fileprivate static var nextID = 0
 }

@@ -10,10 +10,11 @@ import Utils
 /// - Note: This pass may fail if the dispatcher is unable to unambiguously disambiguise the
 ///   semantics of a particular node.
 public final class Dispatcher: ASTTransformer {
+  // Lifecycle
 
   public init(context: ASTContext) {
     self.context = context
-    self.solution = [:]
+    solution = [:]
   }
 
   public init(context: ASTContext, solution: SubstitutionTable) {
@@ -21,12 +22,12 @@ public final class Dispatcher: ASTTransformer {
     self.solution = solution
   }
 
+  // Public
+
   /// The AST context.
   public let context: ASTContext
   /// The substitution map obtained after inference.
   public let solution: SubstitutionTable
-  /// The tuple types already reified.
-  private var visited: [TupleType] = []
 
   public func transform(_ node: Module) throws -> Node {
     // Reify the types of the symbols in the scope of the module.
@@ -220,7 +221,7 @@ public final class Dispatcher: ASTTransformer {
     var scope = node.scope
     var choices: [Symbol] = []
     while scope != nil {
-      choices.append(contentsOf: (scope!.symbols[node.name] ?? []))
+      choices.append(contentsOf: scope!.symbols[node.name] ?? [])
       scope = scope?.parent
     }
 
@@ -230,7 +231,10 @@ public final class Dispatcher: ASTTransformer {
 
     guard choices.count == 1 else {
       // If there are still mutiple candidates, the program is ambiguous.
-      context.add(error: SAError.ambiguousIdentifier(identifier: node, choices: choices), on: node)
+      context.add(
+        error: SAError.ambiguousIdentifier(identifier: node, choices: choices),
+        on: node
+      )
       return node
     }
 
@@ -241,10 +245,15 @@ public final class Dispatcher: ASTTransformer {
     return node
   }
 
+  // Private
+
+  /// The tuple types already reified.
+  private var visited: [TupleType] = []
+
   private func reifyScopeSymbols(of scope: Scope) {
     for symbol in scope.symbols.values.joined() {
-      symbol.type = symbol.type.map { solution.reify(type: $0, in: context, skipping: &visited) }
+      symbol.type = symbol.type
+        .map { solution.reify(type: $0, in: context, skipping: &visited) }
     }
   }
-
 }

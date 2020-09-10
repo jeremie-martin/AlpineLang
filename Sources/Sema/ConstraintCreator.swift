@@ -2,9 +2,24 @@ import AST
 import Foundation
 
 public struct Console: TextOutputStream {
+  // Lifecycle
 
-  public func print(_ items: Any..., separator: String = " ", terminator: String = "\n") {
-    let string = items.map({ String(describing: $0) }).joined(separator: separator) + terminator
+  private init(file: UnsafeMutablePointer<FILE>) {
+    self.file = file
+  }
+
+  // Public
+
+  public static var out = Console(file: stdout)
+  public static var err = Console(file: stderr)
+
+  public func print(
+    _ items: Any...,
+    separator: String = " ",
+    terminator: String = "\n"
+  ) {
+    let string = items.map { String(describing: $0) }
+      .joined(separator: separator) + terminator
     write(string)
   }
 
@@ -12,53 +27,41 @@ public struct Console: TextOutputStream {
     fputs(string, file)
   }
 
-  public static var out = Console(file: stdout)
-  public static var err = Console(file: stderr)
-
-  private init(file: UnsafeMutablePointer<FILE>) {
-    self.file = file
-  }
+  // Private
 
   private var file: UnsafeMutablePointer<FILE>
-
 }
 
-
 public final class ConstraintCreator: ASTVisitor, SAPass {
+  // Lifecycle
 
   public init(context: ASTContext) {
     self.context = context
   }
 
-  public func visit(_ node: Func) throws {
-    let funcType = node.type as! FunctionType
-    let signType = read(signature: node.signature)
-    context.add(
-      constraint: .equality(t: funcType, u: signType, at: .location(node, .signature)))
-
-    try visit(node.body)
-    context.add(
-      constraint: .conformance(
-        t: node.body.type!, u: funcType.codomain, at: .location(node, .body)))
-  }
+  // Public
 
   /// The AST context.
   public let context: ASTContext
 
-  private func read(signature: TypeSign) -> TypeBase {
-    switch signature {
-    case let s as FuncSign : return read(signature: s)
-    case let s as TupleSign: return read(signature: s)
-    case let s as TypeIdent: return read(signature: s)
-    case let s as UnionSign: return read(signature: s)
-    default:
-      fatalError("unreachable")
-    }
+  public func visit(_ node: Func) throws {
+    let funcType = node.type as! FunctionType
+    let signType = read(signature: node.signature)
+    context.add(
+      constraint: .equality(t: funcType, u: signType, at: .location(node, .signature))
+    )
+
+    try visit(node.body)
+    context.add(
+      constraint: .conformance(
+        t: node.body.type!, u: funcType.codomain, at: .location(node, .body)
+      )
+    )
   }
 
   public func visit(_ node: TypeAlias) throws {
     guard let t = node.symbol?.type
-      else { return }
+    else { return }
     assert(t is Metatype)
 
     let u = read(signature: node.signature).metatype
@@ -68,8 +71,14 @@ public final class ConstraintCreator: ASTVisitor, SAPass {
   public func visit(_ node: If) throws {
     // The condition of a conditional expression is always boolean.
     try visit(node.condition)
-    context.add(constraint:
-      .equality(t: node.condition.type!, u: BuiltinType.bool, at: .location(node, .condition)))
+    context.add(
+      constraint:
+      .equality(
+        t: node.condition.type!,
+        u: BuiltinType.bool,
+        at: .location(node, .condition)
+      )
+    )
 
     // Infer the type constraints of both branches.
     try visit(node.thenExpr)
@@ -90,14 +99,15 @@ public final class ConstraintCreator: ASTVisitor, SAPass {
     // Just as for conditional expressions, create the type of the match as the union of all
     // branches, as each might be returning a different constructor, and would hence have a
     // different type.
-    node.type = context.getUnionType(cases: Set(node.cases.map({ $0.value.type! })))
+    node.type = context.getUnionType(cases: Set(node.cases.map { $0.value.type! }))
 
     // Each case pattern should conform to the type of the subject.
     for (i, matchCase) in node.cases.enumerated() {
       context.add(constraint: .conformance(
         t: matchCase.pattern.type!,
         u: node.subject.type!,
-        at: .location(node, .matchPattern(i))))
+        at: .location(node, .matchPattern(i))
+      ))
     }
   }
 
@@ -107,21 +117,28 @@ public final class ConstraintCreator: ASTVisitor, SAPass {
     // node.type = node.value.type
   }
 
-  public func visit(_ node: Binary) {
+  public func visit(_: Binary) {
     fatalError("AST not normalized, did you forget to apply the normalizer?")
   }
 
-  public func visit(_ node: Unary) {
+  public func visit(_: Unary) {
     fatalError("AST not normalized, did you forget to apply the normalizer?")
   }
 
   public func visit(_ node: Call) throws {
     // Build the supposed type of the callee's parameters.
-    let elements = node.arguments.map { TupleTypeElem(label: $0.label, type: TypeVariable()) }
+    let elements = node.arguments
+      .map { TupleTypeElem(label: $0.label, type: TypeVariable()) }
     for (i, (arg, elem)) in zip(node.arguments, elements).enumerated() {
       try visit(arg)
-      context.add(constraint:
-        .conformance(t: arg.type!, u: elem.type, at: .location(node, .tuple) + .elementIndex(i)))
+      context.add(
+        constraint:
+        .conformance(
+          t: arg.type!,
+          u: elem.type,
+          at: .location(node, .tuple) + .elementIndex(i)
+        )
+      )
     }
 
     // Build the supposed type of the callee.
@@ -130,8 +147,10 @@ public final class ConstraintCreator: ASTVisitor, SAPass {
     let domain = context.getTupleType(label: nil, elements: elements)
     let funcType = context.getFunctionType(from: domain, to: node.type!)
 
-    context.add(constraint:
-      .equality(t: node.callee.type!, u: funcType, at: .location(node, .callee)))
+    context.add(
+      constraint:
+      .equality(t: node.callee.type!, u: funcType, at: .location(node, .callee))
+    )
   }
 
   public func visit(_ node: Arg) throws {
@@ -145,7 +164,8 @@ public final class ConstraintCreator: ASTVisitor, SAPass {
     }
     node.type = context.getTupleType(
       label: node.label,
-      elements: node.elements.map { TupleTypeElem(label: $0.label, type: $0.type!) })
+      elements: node.elements.map { TupleTypeElem(label: $0.label, type: $0.type!) }
+    )
   }
 
   public func visit(_ node: TupleElem) throws {
@@ -166,8 +186,15 @@ public final class ConstraintCreator: ASTVisitor, SAPass {
     case .index(let index):
       path = .elementIndex(index)
     }
-    context.add(constraint:
-      .member(t: node.owner.type!, member: node.ownee, u: node.type!, at: .location(node, path)))
+    context.add(
+      constraint:
+      .member(
+        t: node.owner.type!,
+        member: node.ownee,
+        u: node.type!,
+        at: .location(node, path)
+      )
+    )
   }
 
   public func visit(_ node: Ident) throws {
@@ -210,24 +237,39 @@ public final class ConstraintCreator: ASTVisitor, SAPass {
     node.type = BuiltinType.string
   }
 
+  // Private
+
+  private func read(signature: TypeSign) -> TypeBase {
+    switch signature {
+    case let s as FuncSign: return read(signature: s)
+    case let s as TupleSign: return read(signature: s)
+    case let s as TypeIdent: return read(signature: s)
+    case let s as UnionSign: return read(signature: s)
+    default:
+      fatalError("unreachable")
+    }
+  }
+
   // MARK: Type signature handling
 
   private func read(signature: FuncSign) -> TypeBase {
-    return context.getFunctionType(
+    context.getFunctionType(
       from: read(signature: signature.domain),
-      to  : read(signature: signature.codomain))
+      to: read(signature: signature.codomain)
+    )
   }
 
   private func read(signature: TupleSign) -> TupleType {
-    return context.getTupleType(
+    context.getTupleType(
       label: signature.label,
-      elements: signature.elements.map({
+      elements: signature.elements.map {
         TupleTypeElem(label: $0.label, type: read(signature: $0.signature))
-      }))
+      }
+    )
   }
 
   private func read(signature: UnionSign) -> TypeBase {
-    return context.getUnionType(cases: Set(signature.cases.map({ read(signature: $0) })))
+    context.getUnionType(cases: Set(signature.cases.map { read(signature: $0) }))
   }
 
   private func read(signature: TypeIdent) -> TypeBase {
@@ -239,12 +281,14 @@ public final class ConstraintCreator: ASTVisitor, SAPass {
 
     // Type identifiers should be associated with a unique metatype.
     guard symbols.count == 1, let meta = symbols[0].type as? Metatype else {
-      context.add(error: SAError.invalidTypeIdentifier(name: signature.name), on: signature)
+      context.add(
+        error: SAError.invalidTypeIdentifier(name: signature.name),
+        on: signature
+      )
       return ErrorType.get
     }
 
     signature.type = meta
     return meta.type
   }
-
 }

@@ -303,7 +303,7 @@ func isDigit(_ char: UnicodeScalar) -> Bool {
 
 /// Returns whetehr or not the given character is an alphanumeric characters, or `_`.
 func isAlnumOrUnderscore(_ char: UnicodeScalar) -> Bool {
-  return (char == "_") || (char == "@") || (CharacterSet.alphanumerics.contains(char))
+  return (char == "_") || (char == "@") || (char == "λ") || (CharacterSet.alphanumerics.contains(char))
 }
 
 /// Set of operator symbols.

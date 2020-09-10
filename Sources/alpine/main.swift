@@ -54,6 +54,23 @@ x * y
 func operationCurry(_ x: Int, op: (Int, Int) -> Int) -> (Int) -> Int ::
   func partialApply(_ y: Int) -> Int ::
     op(x,y);
+
+type Nat :: #zero or #succ(Nat)
+type Boolean :: #True or #False
+
+func plusOne(_ nat: Nat) -> Nat ::
+  #succ(nat)
+
+func toBool(_ nat: Nat) -> Boolean ::
+  match(nat)
+    with #zero ::
+      #False
+    with #succ(let x)::
+      #True
+
+func curry(_ foo: (Nat) -> Nat) -> (Nat) -> Boolean::
+  func partial(_ bar: Nat) -> Boolean ::
+    toBool(foo(bar));
 """
 /* module = """ */
 /* type MyBoolean :: #MyTrue or #MyFalse */
@@ -107,7 +124,6 @@ try! interpreter.loadModule(fromString: module)
 /* var falseAST = try! interpreter.eval(string: "#MyTrue")! */
 /* let ret = try! interpreter.eval(string: "toNat(MyNot)")! */
 /* let foo = try! interpreter.eval(string: "fff(add(toNat(MyNot)(#MyFalse), #succ(#zero)))", replace: ["fff": ret])! */
-/* dumper.dump(ast: ret) */
 /* let n = try! interpreter.eval(string: "add(1,2)")! */
 /* let n = try! interpreter.eval(string: "curry(1, op: add)")! */
 /* let m = try! interpreter.eval(string: "fff(1,2), replace: ["fff": n])! */
@@ -118,18 +134,18 @@ try! interpreter.loadModule(fromString: module)
 /* dumper.dump(ast: issou) */
 /* let bar = try! interpreter.eval(string: "f(5)", replace: ["f": issou.copy(), "g": issou.copy()])! */
 /* dumper.dump(ast: bar) */
-      /* switch n{ */
-      /* case .tuple(let e, _, _): */
-      /*   print("tuple", e) */
-      /* case .function(let f, let closure): */
-      /*   print("func", f) */
-      /*   closure.forEach { print("  -", $0.key, $0.value) } */
-      /*   print("sad") */
-      /*   [> evalContext.merge(closure, uniquingKeysWith: { _, rhs in rhs }) <] */
-      /* default: */
-      /*   print("other") */
-      /* } */
-      /*  */
+/* switch n{ */
+/* case .tuple(let e, _, _): */
+/*   print("tuple", e) */
+/* case .function(let f, let closure): */
+/*   print("func", f) */
+/*   closure.forEach { print("  -", $0.key, $0.value) } */
+/*   print("sad") */
+/*   [> evalContext.merge(closure, uniquingKeysWith: { _, rhs in rhs }) <] */
+/* default: */
+/*   print("other") */
+/* } */
+/*  */
 
 /* let m = try! interpreter.eval(string: "toNat(MyNot)") */
 /* let n = try! interpreter.eval(string: "toNat(Ident)") */
@@ -153,11 +169,40 @@ try! interpreter.loadModule(fromString: module)
 
 /* let p = try! interpreter.eval(string: "fff(add(fff(fff(0)), fff(xxx)))", replace: ["fff": n, "xxx": m]) */
 
+print("HAHAHAHAH")
+/* print(try! interpreter.eval(string: "1,2")) */
+let x = try! interpreter.eval(string: "#succ(#zero)")
+/* interpreter.factory.dump() */
+switch x {
+case .tuple(let a, let b, let c):
+  print("!!!")
+  print(a)
+/* dumper.dump(ast: a) */
+default:
+  break
+}
+let z = try! interpreter.eval(string: "curry(plusOne)")
+print("z", z)
+print("aaa", x == z)
+let y = try! interpreter.eval(string: "@f(@x)", replace: ["@x": x, "@f": z])
+print("bbbb", y)
+
 let m = try! interpreter.eval(string: "add(1, 2)")
 let n = try! interpreter.eval(string: "operationCurry(@x, op: add)", replace: ["@x": m])
 let q = try! interpreter.eval(string: "operationCurry(2, op: mul)")
-let s = try! interpreter.eval(string: "@g(@f(@f(@g(7) - 10)))", replace: ["@f": n, "@g": q])
+switch n {
+case .function(let a, let b):
+  print("!!!")
+  print(a)
+default:
+  break
+}
 
+let s = try! interpreter.eval(
+  string: "@g(@f(@f(@g(7) - @f(10))))",
+  replace: ["@f": n, "@g": q]
+)
+print("bbbbbbbbbbbbbbbbbbb")
 print(s)
 
 /* print(o) */

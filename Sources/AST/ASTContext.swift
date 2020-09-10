@@ -2,9 +2,11 @@ import Utils
 
 /// Cass that holds metadata to be associated with an AST.
 public final class ASTContext {
+  // Lifecycle
 
-  public init() {
-  }
+  public init() {}
+
+  // Public
 
   // MARK: Modules
 
@@ -15,22 +17,30 @@ public final class ASTContext {
 
   /// The type constraints that haven't been solved yet.
   public var typeConstraints: [Constraint] = []
-  /// The function types in the context.
-  private var functionTypes: [FunctionType] = []
-  /// The tuple types in the context.
-  private var tupleTypes: [TupleType] = []
-  /// The union types in the context.
-  private var unionTypes: [UnionType] = []
+
+  // MARK: Built-ins
+
+  public lazy var builtinScope: BuiltinScope = { [unowned self] in
+    BuiltinScope(context: self)
+  }()
+
+  // MARK: Diagnostics
+
+  /// The list of errors encountered during the processing of the AST.
+  public var errors: [ASTError] = []
 
   public func add(constraint: Constraint) {
     typeConstraints.append(constraint)
   }
 
   /// Retrieves or create a function type.
-  public func getFunctionType(from domain: TupleType, to codomain: TypeBase) -> FunctionType {
+  public func getFunctionType(
+    from domain: TupleType,
+    to codomain: TypeBase
+  ) -> FunctionType {
     if let type = functionTypes.first(where: {
-      return ($0.domain == domain)
-          && ($0.codomain == codomain)
+      ($0.domain == domain)
+        && ($0.codomain == codomain)
     }) {
       return type
     }
@@ -42,8 +52,8 @@ public final class ASTContext {
   /// Retrieves or create a tuple type.
   public func getTupleType(label: String?, elements: [TupleTypeElem]) -> TupleType {
     if let type = tupleTypes.first(where: {
-      return ($0.label == label)
-          && ($0.elements == elements)
+      ($0.label == label)
+        && ($0.elements == elements)
     }) {
       return type
     }
@@ -71,6 +81,23 @@ public final class ASTContext {
     }
   }
 
+  public func add(error: ASTError) {
+    errors.append(error)
+  }
+
+  public func add(error: Any, on node: Node) {
+    errors.append(ASTError(cause: error, node: node))
+  }
+
+  // Private
+
+  /// The function types in the context.
+  private var functionTypes: [FunctionType] = []
+  /// The tuple types in the context.
+  private var tupleTypes: [TupleType] = []
+  /// The union types in the context.
+  private var unionTypes: [UnionType] = []
+
   private func flatten(_ cases: Set<TypeBase>) -> Set<TypeBase> {
     var result: Set<TypeBase> = []
     for type in cases {
@@ -82,37 +109,19 @@ public final class ASTContext {
     }
     return result
   }
-
-  // MARK: Built-ins
-
-  public lazy var builtinScope: BuiltinScope = { [unowned self] in
-    return BuiltinScope(context: self)
-  }()
-
-  // MARK: Diagnostics
-
-  /// The list of errors encountered during the processing of the AST.
-  public var errors: [ASTError] = []
-
-  public func add(error: ASTError) {
-    errors.append(error)
-  }
-
-  public func add(error: Any, on node: Node) {
-    errors.append(ASTError(cause: error, node: node))
-  }
-
 }
 
 /// An error associated with an AST node.
 public struct ASTError {
+  // Lifecycle
 
   public init(cause: Any, node: Node) {
     self.cause = cause
     self.node = node
   }
 
+  // Public
+
   public let cause: Any
   public let node: Node
-
 }

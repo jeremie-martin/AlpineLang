@@ -1,5 +1,30 @@
 /// A named symbol.
 public class Symbol {
+  // Lifecycle
+
+  internal init(
+    name: String, scope: Scope, type: TypeBase?, overloadable: Bool
+  ) {
+    self.name = name
+    self.scope = scope
+    self.type = type
+    self.overloadable = overloadable
+  }
+
+  // Public
+
+  /// The name of the symbol.
+  public let name: String
+  /// The type of the symbol.
+  public var type: TypeBase?
+  /// Let function symbols be marked overloadable.
+  public let overloadable: Bool
+  /// The scope that defines this symbol.
+
+  // TODO:
+  /* public unowned var scope: Scope */
+  public var scope: Scope
+
   public func copy(scope: Scope? = nil) -> Symbol {
     // print(scope)
     let _scope = (scope != nil) ? scope : self.scope.copy()
@@ -8,7 +33,12 @@ public class Symbol {
     /* print(self.name) */
     /* print(self.scope) */
 
-    let s = Symbol(name: String(self.name), scope: _scope!, type: self.type?.copy(), overloadable: self.overloadable)
+    let s = Symbol(
+      name: String(name),
+      scope: _scope!,
+      type: type?.copy(),
+      overloadable: overloadable
+    )
     // print("scooooooooooooope", _scope)
     // print("scopessssssssssss", s.scope)
     /* print(self.name) */
@@ -22,32 +52,9 @@ public class Symbol {
     /* print("qqqqqqqqqqqqqqqqq", self.scope.id, s.scope.id) */
     return s
   }
-
-  internal init(
-    name: String, scope: Scope, type: TypeBase?, overloadable: Bool)
-  {
-    self.name = name
-    self.scope = scope
-    self.type = type
-    self.overloadable = overloadable
-  }
-
-  /// The name of the symbol.
-  public let name: String
-  /// The type of the symbol.
-  public var type: TypeBase?
-  /// Let function symbols be marked overloadable.
-  public let overloadable: Bool
-  /// The scope that defines this symbol.
-
-  // TODO
-  /* public unowned var scope: Scope */
-  public var scope: Scope
-
 }
 
 extension Symbol: Hashable {
-
   public func hash(into hasher: inout Hasher) {
     hasher.combine(name)
     hasher.combine(scope.id)
@@ -59,19 +66,20 @@ extension Symbol: Hashable {
   }
 
   public static func == (lhs: Symbol, rhs: Symbol) -> Bool {
+    /* lhs.hashValue == rhs.hashValue */
+    /* print("aaaaaaaaaajgjdfhgdhfg", lhs.type, rhs.type) */
+    lhs === rhs
+    /* lhs.hashValue == rhs.hashValue */
+    /* if lhs === rhs { */
+    /*   // print("??????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????") */
+    /* } */
+    /* if lhs.name == rhs.name { */
+    /*   // print("on est là") */
+    /*   // print(lhs.name, rhs.name, lhs.hashValue, rhs.hashValue) */
+    /*   // print(lhs.hashValue == rhs.hashValue) */
+    /*   // print() */
+    /* } */
+    /* [> return lhs === rhs <] */
     /* return lhs.hashValue == rhs.hashValue */
-    return lhs === rhs
-    if(lhs === rhs) {
-      // print("??????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????")
-    }
-    if(lhs.name == rhs.name) {
-      // print("on est là")
-    // print(lhs.name, rhs.name, lhs.hashValue, rhs.hashValue)
-    // print(lhs.hashValue == rhs.hashValue)
-    // print()
-    }
-    /* return lhs === rhs */
-    return lhs.hashValue == rhs.hashValue
   }
-
 }

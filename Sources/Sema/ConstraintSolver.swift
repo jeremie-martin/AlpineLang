@@ -5,8 +5,13 @@ import Utils
 let SOLVER_TIMEOUT: Stopwatch.TimeInterval? = nil
 
 public struct ConstraintSolver {
+  // Lifecycle
 
-  public init<S>(constraints: S, in context: ASTContext, assumptions: SubstitutionTable = [:])
+  public init<S>(
+    constraints: S,
+    in context: ASTContext,
+    assumptions: SubstitutionTable = [:]
+  )
     where S: Sequence, S.Element == Constraint
   {
     self.context = context
@@ -14,15 +19,10 @@ public struct ConstraintSolver {
     self.assumptions = assumptions
   }
 
+  // Public
+
   /// The AST context.
   public let context: ASTContext
-  // The constraints that are yet to be solved.
-  private var constraints: [Constraint]
-  // The assumptions made so far on the free types of the AST.
-  private var assumptions: SubstitutionTable
-
-  private typealias Success = SubstitutionTable
-  private typealias Failure = (constraint: Constraint, cause: SolverResult.FailureKind)
 
   /// Attempts to solve a set of typing constraints, returning either a solution or the constraints
   /// that couldn't be satisfied.
@@ -31,7 +31,7 @@ public struct ConstraintSolver {
 
     while let constraint = constraints.popLast() {
       guard (SOLVER_TIMEOUT == nil) || (stopwatch.elapsed < SOLVER_TIMEOUT!)
-        else { return .failure([(reify(constraint: constraint), .timeout)]) }
+      else { return .failure([(reify(constraint: constraint), .timeout)]) }
 
       switch constraint.kind {
       case .equality, .conformance:
@@ -55,7 +55,8 @@ public struct ConstraintSolver {
           var subsolver = ConstraintSolver(
             constraints: constraints + [choice],
             in: context,
-            assumptions: assumptions)
+            assumptions: assumptions
+          )
           results.append(subsolver.solve())
         }
 
@@ -105,6 +106,16 @@ public struct ConstraintSolver {
     return .success(solution: assumptions)
   }
 
+  // Private
+
+  private typealias Success = SubstitutionTable
+  private typealias Failure = (constraint: Constraint, cause: SolverResult.FailureKind)
+
+  // The constraints that are yet to be solved.
+  private var constraints: [Constraint]
+  // The assumptions made so far on the free types of the AST.
+  private var assumptions: SubstitutionTable
+
   /// Attempts to match `t` and `u`, effectively solving a given constraint between those types.
   private mutating func solve(match constraint: Constraint) -> TypeMatchResult {
     // Get the substitutions we already inferred for `t` and `u` if they are type variables.
@@ -116,7 +127,7 @@ public struct ConstraintSolver {
 
     switch (a, b) {
     case (let var_ as TypeVariable, _):
-      if constraint.kind == .conformance && b is TypeVariable {
+      if constraint.kind == .conformance, b is TypeVariable {
         // If both `t` and `u` are unknown, we can't solve the conformance constraint yet.
         constraints.insert(constraint, at: 0)
         return .success
@@ -155,12 +166,18 @@ public struct ConstraintSolver {
         // amounts to solving `t_i ≤ u` for all `t_i` in `t`, as well as `u_i ≤ t` for all `u_i` in
         // `u` in the case of an equality constraint.
         for ti in cases {
-          constraints.append(.conformance(t: ti, u: b, at: constraint.location + .unionCase))
+          constraints
+            .append(.conformance(t: ti, u: b, at: constraint.location + .unionCase))
         }
         if constraint.kind == .equality {
           let rightCases = Set(right.cases.map(assumptions.substitution))
           for ui in rightCases {
-            constraints.append(.conformance(t: ui, u: union, at: constraint.location + .unionCase))
+            constraints
+              .append(.conformance(
+                t: ui,
+                u: union,
+                at: constraint.location + .unionCase
+              ))
           }
         }
       } else {
@@ -171,7 +188,8 @@ public struct ConstraintSolver {
           constraints.append(Constraint(
             kind: constraint.kind,
             types: (ti, b),
-            location:  constraint.location))
+            location: constraint.location
+          ))
         }
       }
 
@@ -196,7 +214,8 @@ public struct ConstraintSolver {
       // If we can't find `t` in `u`, it might be that `u` contains types that aren't reified or
       // fully infered yet. Hence we should break the constraint into a disjunction of conformances
       // for each case of the union.
-      let choices = union.cases.map { Constraint.conformance(t: a, u: $0, at: constraint.location) }
+      let choices = union.cases
+        .map { Constraint.conformance(t: a, u: $0, at: constraint.location) }
       constraints.insert(.disjunction(choices, at: constraint.location), at: 0)
       return .success
 
@@ -205,11 +224,13 @@ public struct ConstraintSolver {
       constraints.append(Constraint(
         kind: constraint.kind,
         types: (fl.domain, fr.domain),
-        location: constraint.location + ConstraintPath.domain))
+        location: constraint.location + ConstraintPath.domain
+      ))
       constraints.append(Constraint(
         kind: constraint.kind,
         types: (fl.codomain, fr.codomain),
-        location: constraint.location + ConstraintPath.codomain))
+        location: constraint.location + ConstraintPath.codomain
+      ))
       return .success
 
     case (let tl as TupleType, let tr as TupleType):
@@ -217,15 +238,16 @@ public struct ConstraintSolver {
       guard
         tl.label == tr.label,
         tl.elements.count == tr.elements.count,
-        zip(tl.elements, tr.elements).all(satisfy: { $0.0.label == $0.1.label }) else
-      { return .failure }
+        zip(tl.elements, tr.elements).all(satisfy: { $0.0.label == $0.1.label })
+      else { return .failure }
 
       // Simplify the constraint.
       for (i, elements) in zip(tl.elements, tr.elements).enumerated() {
         constraints.append(Constraint(
           kind: constraint.kind,
           types: (elements.0.type, elements.1.type),
-          location: constraint.location + .elementIndex(i)))
+          location: constraint.location + .elementIndex(i)
+        ))
       }
       return .success
 
@@ -234,7 +256,8 @@ public struct ConstraintSolver {
       constraints.append(Constraint(
         kind: constraint.kind,
         types: (ml.type, mr.type),
-        location: constraint.location))
+        location: constraint.location
+      ))
       return .success
 
     default:
@@ -258,16 +281,17 @@ public struct ConstraintSolver {
       case .label(let label):
         element = tupleType.elements.first(where: { $0.label == label })
         guard element != nil
-          else { return .failure }
+        else { return .failure }
       case .index(let index):
         guard index < tupleType.elements.count
-          else { return .failure }
+        else { return .failure }
         element = tupleType.elements[index]
       }
 
       // Break the constraint.
       constraints.append(
-        .equality(t: constraint.types!.u, u: element!.type, at: constraint.location))
+        .equality(t: constraint.types!.u, u: element!.type, at: constraint.location)
+      )
       return .success
 
     default:
@@ -277,28 +301,30 @@ public struct ConstraintSolver {
 
   /// Reify the types of a constraint.
   private func reify(constraint: Constraint) -> Constraint {
-    return Constraint(
+    Constraint(
       kind: constraint.kind,
-      types: constraint.types.map({ (t, u) -> (TypeBase, TypeBase) in
+      types: constraint.types.map { (t, u) -> (TypeBase, TypeBase) in
         let a = assumptions.reify(type: t, in: context)
         let b = assumptions.reify(type: u, in: context)
         return (a, b)
-      }),
+      },
       member: constraint.member,
       choices: constraint.choices.map(reify),
-      location: constraint.location)
+      location: constraint.location
+    )
   }
-
 }
 
 private enum TypeMatchResult {
-
   case success
   case failure
-
 }
 
 public enum SolverResult {
+  case success(solution: SubstitutionTable)
+  case failure([(constraint: Constraint, cause: FailureKind)])
+
+  // Public
 
   public enum FailureKind {
     case ambiguousExpression
@@ -306,14 +332,10 @@ public enum SolverResult {
     case typeMismatch
   }
 
-  case success(solution: SubstitutionTable)
-  case failure([(constraint: Constraint, cause: FailureKind)])
-
   public var isSuccess: Bool {
     if case .success = self {
       return true
     }
     return false
   }
-
 }

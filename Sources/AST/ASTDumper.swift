@@ -7,18 +7,17 @@ precedencegroup StreamPrecedence {
 
 infix operator <<<: StreamPrecedence
 
-public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextOutputStream {
+public final class ASTDumper<OutputStream>: ASTVisitor
+  where OutputStream: TextOutputStream {
+  // Lifecycle
 
   public init(outputTo outputStream: OutputStream) {
     self.outputStream = outputStream
   }
 
-  public var outputStream: OutputStream
+  // Public
 
-  private var level: Int = 0
-  private var indent: String {
-    return String(repeating: "  ", count: level)
-  }
+  public var outputStream: OutputStream
 
   public func dump(ast: Node) {
     try! visit(ast)
@@ -26,8 +25,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: Module) throws {
-		// print("DUMPER: Module", node.module)
-    self <<< indent <<< "(module" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: Module", node.module)
+    self <<< indent <<< "(module" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " inner_scope='" <<< node.innerScope <<< "'"
     self <<< " inner_scopeid='" <<< node.innerScope?.id <<< "'"
 
@@ -39,8 +40,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: Func) throws {
-		// print("DUMPER: Func", node.module)
-    self <<< indent <<< "(func" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: Func", node.module)
+    self <<< indent <<< "(func" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     if let name = node.name {
       self <<< " '\(name)'"
     }
@@ -62,8 +65,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: TypeAlias) throws {
-		// print("DUMPER: TypeAlias", node.module)
-    self <<< indent <<< "(type_alias '\(node.name)'" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: TypeAlias", node.module)
+    self <<< indent <<< "(type_alias '\(node.name)'" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " symbol='" <<< node.symbol?.name <<< "'"
     self <<< " scope='" <<< node.scope <<< "'"
     self <<< " scopeid='" <<< node.scope?.id <<< "'"
@@ -76,8 +81,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: FuncSign) throws {
-		// print("DUMPER: FuncSign", node.module)
-    self <<< indent <<< "(func_sign" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: FuncSign", node.module)
+    self <<< indent <<< "(func_sign" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     withIndentation {
       self <<< "\n" <<< indent <<< "(domain\n"
       withIndentation { try visit(node.domain) }
@@ -90,8 +97,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: TupleSign) throws {
-		// print("DUMPER: TupleSign", node.module)
-    self <<< indent <<< "(tuple_sign" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: TupleSign", node.module)
+    self <<< indent <<< "(tuple_sign" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     if let label = node.label {
       self <<< " '\(label)'"
     }
@@ -103,8 +112,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: TupleSignElem) throws {
-		// print("DUMPER: TupleSignElem", node.module)
-    self <<< indent <<< "(tuple_sign_elem" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: TupleSignElem", node.module)
+    self <<< indent <<< "(tuple_sign_elem" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " '" <<< node.label <<< "'"
     self <<< " '" <<< node.name <<< "'"
     withIndentation {
@@ -116,8 +127,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: UnionSign) throws {
-		// print("DUMPER: UnionSign", node.module)
-    self <<< indent <<< "(union_sign" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: UnionSign", node.module)
+    self <<< indent <<< "(union_sign" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     if !node.cases.isEmpty {
       self <<< "\n"
       withIndentation { try visit(node.cases) }
@@ -126,8 +139,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: TypeIdent) throws {
-		// print("DUMPER: TypeIdent", node.module)
-    self <<< indent <<< "(type_ident '\(node.name)'" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: TypeIdent", node.module)
+    self <<< indent <<< "(type_ident '\(node.name)'" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " type='" <<< node.type <<< "'"
     self <<< " scope='" <<< node.scope <<< "'"
     self <<< " scopeid='" <<< node.scope?.id <<< "'"
@@ -135,8 +150,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: If) throws {
-		// print("DUMPER: If", node.module)
-    self <<< indent <<< "(if" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: If", node.module)
+    self <<< indent <<< "(if" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " type='" <<< node.type <<< "'"
     withIndentation {
       self <<< "\n" <<< indent <<< "(condition\n"
@@ -155,8 +172,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: Match) throws {
-		// print("DUMPER: Match", node.module)
-    self <<< indent <<< "(match" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: Match", node.module)
+    self <<< indent <<< "(match" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " type='" <<< node.type <<< "'"
     withIndentation {
       self <<< "\n" <<< indent <<< "(subject\n"
@@ -170,8 +189,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: MatchCase) throws {
-		// print("DUMPER: MatchCase", node.module)
-    self <<< indent <<< "(match_case" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: MatchCase", node.module)
+    self <<< indent <<< "(match_case" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " inner_scope='" <<< node.innerScope <<< "'"
     self <<< " inner_scopeid='" <<< node.innerScope?.id <<< "'"
     withIndentation {
@@ -186,8 +207,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: LetBinding) throws {
-		// print("DUMPER: LetBinding", node.module)
-    self <<< indent <<< "(let_binding '\(node.name)'" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: LetBinding", node.module)
+    self <<< indent <<< "(let_binding '\(node.name)'" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " type='" <<< node.type <<< "'"
     self <<< " scope='" <<< node.scope <<< "'"
     self <<< " scopeid='" <<< node.scope?.id <<< "'"
@@ -195,8 +218,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: Binary) throws {
-		// print("DUMPER: Binary", node.module)
-    self <<< indent <<< "(binary" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: Binary", node.module)
+    self <<< indent <<< "(binary" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " type='" <<< node.type <<< "'"
     withIndentation {
       self <<< "\n" <<< indent <<< "(left\n"
@@ -213,8 +238,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: Unary) throws {
-		// print("DUMPER: Unary", node.module)
-    self <<< indent <<< "(unary" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: Unary", node.module)
+    self <<< indent <<< "(unary" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " type='" <<< node.type <<< "'"
     withIndentation {
       self <<< "\n" <<< indent <<< "(prefix_operator\n"
@@ -228,8 +255,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: Call) throws {
-		// print("DUMPER: Call", node.module)
-    self <<< indent <<< "(call" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: Call", node.module)
+    self <<< indent <<< "(call" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " type='" <<< node.type <<< "'"
     withIndentation {
       self <<< "\n" <<< indent <<< "(callee\n"
@@ -245,8 +274,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: Arg) {
-		// print("DUMPER: Arg", node.module)
-    self <<< indent <<< "(arg" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: Arg", node.module)
+    self <<< indent <<< "(arg" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " '" <<< node.label <<< "'"
     self <<< " type='" <<< node.type <<< "'"
     withIndentation {
@@ -257,8 +288,8 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: Tuple) throws {
-		// print("DUMPER: Tuple", node.module)
-    self <<< indent <<< "(tuple" 
+    // print("DUMPER: Tuple", node.module)
+    self <<< indent <<< "(tuple"
     self <<< " type='" <<< node.type <<< "'"
     if let label = node.label {
       self <<< " '\(label)'"
@@ -271,8 +302,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: TupleElem) throws {
-		// print("DUMPER: TupleElem", node.module)
-    self <<< indent <<< "(tuple_elem" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: TupleElem", node.module)
+    self <<< indent <<< "(tuple_elem" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " '" <<< node.label <<< "'"
     withIndentation {
       self <<< "\n" <<< indent <<< "(value\n"
@@ -283,8 +316,10 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: Select) {
-		// print("DUMPER: Select", node.module)
-    self <<< indent <<< "(select" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: Select", node.module)
+    self <<< indent <<< "(select" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " type='" <<< node.type <<< "'"
     withIndentation {
       self <<< "\n" <<< indent <<< "(owner\n"
@@ -296,9 +331,11 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: Ident) {
-		// print("DUMPER: Ident", node.module)
-    self <<< indent <<< "(ident '\(node.name)'" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
-    self <<< " symbol='" <<< node.symbol <<< "'"
+    // print("DUMPER: Ident", node.module)
+    self <<< indent <<< "(ident '\(node.name)'" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
+    self <<< " symbol='" <<< node.symbol?.name <<< ", " <<< node.symbol?.type <<< " '"
     self <<< " type='" <<< node.type <<< "'"
     self <<< " scope='" <<< node.scope <<< "'"
     self <<< " scopeid='" <<< node.scope?.id <<< "'"
@@ -306,29 +343,37 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
   }
 
   public func visit(_ node: Scalar<Bool>) {
-		// print("DUMPER: Scalar", node.module)
-    self <<< indent <<< "(scalar \(node.value)" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: Scalar", node.module)
+    self <<< indent <<< "(scalar \(node.value)" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " type='" <<< node.type <<< "'"
     self <<< ")"
   }
 
   public func visit(_ node: Scalar<Int>) {
-		// print("DUMPER: Scalar", node.module)
-    self <<< indent <<< "(scalar \(node.value)" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: Scalar", node.module)
+    self <<< indent <<< "(scalar \(node.value)" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " type='" <<< node.type <<< "'"
     self <<< ")"
   }
 
   public func visit(_ node: Scalar<Double>) {
-		// print("DUMPER: Scalar", node.module)
-    self <<< indent <<< "(scalar \(node.value)" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: Scalar", node.module)
+    self <<< indent <<< "(scalar \(node.value)" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " type='" <<< node.type <<< "'"
     self <<< ")"
   }
 
   public func visit(_ node: Scalar<String>) {
-		// print("DUMPER: Scalar", node.module)
-    self <<< indent <<< "(scalar \"\(node.value)\"" <<< " <module : " <<< node.module.innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements.count <<< ">"
+    // print("DUMPER: Scalar", node.module)
+    self <<< indent <<< "(scalar \"\(node.value)\"" <<< " <module : " <<< node.module
+      .innerScope <<< " (" <<< node.module.range <<< ") " <<< node.module.statements
+      .count <<< ">"
     self <<< " type='" <<< node.type <<< "'"
     self <<< ")"
   }
@@ -342,11 +387,7 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
     }
   }
 
-  fileprivate func withIndentation(body: () throws -> Void) {
-    level += 1
-    try! body()
-    level -= 1
-  }
+  // Fileprivate
 
   @discardableResult
   fileprivate static func <<< <T>(dumper: ASTDumper, item: T) -> ASTDumper {
@@ -356,8 +397,21 @@ public final class ASTDumper<OutputStream>: ASTVisitor where OutputStream: TextO
 
   @discardableResult
   fileprivate static func <<< <T>(dumper: ASTDumper, item: T?) -> ASTDumper {
-    dumper.outputStream.write(item.map({ String(describing: $0) }) ?? "_")
+    dumper.outputStream.write(item.map { String(describing: $0) } ?? "_")
     return dumper
   }
 
+  fileprivate func withIndentation(body: () throws -> Void) {
+    level += 1
+    try! body()
+    level -= 1
+  }
+
+  // Private
+
+  private var level: Int = 0
+
+  private var indent: String {
+    String(repeating: "  ", count: level)
+  }
 }

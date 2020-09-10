@@ -2,18 +2,18 @@ import AST
 import Utils
 
 public final class NameBinder: ASTVisitor, SAPass {
+  // Lifecycle
 
   public init(context: ASTContext) {
     self.context = context
   }
 
+  // Public
+
   public let replace: [String: Expr] = [:]
 
   /// The AST context.
   public let context: ASTContext
-
-  /// A stack of scope, used to bind symbols to their respective scope, lexically.
-  private var scopes: Stack<Scope> = []
 
   public func visit(_ node: Module) throws {
     scopes.push(node.innerScope!)
@@ -45,7 +45,10 @@ public final class NameBinder: ASTVisitor, SAPass {
     scopes.pop()
   }
 
-  public func visit(_ node: Ident) throws {  
+  public func visit(_ node: Ident) throws {
+    if node.scope != nil {
+      return
+    }
     // Find the scope that defines the visited identifier.
     guard let scope = findScope(declaring: node.name) else {
       context.add(error: SAError.undefinedSymbol(name: node.name), on: node)
@@ -55,6 +58,9 @@ public final class NameBinder: ASTVisitor, SAPass {
   }
 
   public func visit(_ node: TypeIdent) throws {
+    if node.scope != nil {
+      return
+    }
     // Find the scope that defines the visited identifier.
     guard let scope = findScope(declaring: node.name) else {
       context.add(error: SAError.undefinedSymbol(name: node.name), on: node)
@@ -62,6 +68,11 @@ public final class NameBinder: ASTVisitor, SAPass {
     }
     node.scope = scope
   }
+
+  // Private
+
+  /// A stack of scope, used to bind symbols to their respective scope, lexically.
+  private var scopes: Stack<Scope> = []
 
   private func findScope(declaring name: String) -> Scope? {
     // Search in the scopes of current module first.
@@ -86,5 +97,4 @@ public final class NameBinder: ASTVisitor, SAPass {
     // The symbol does not exist in any of the reachable scopes.
     return nil
   }
-
 }

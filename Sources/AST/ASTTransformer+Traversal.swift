@@ -1,36 +1,36 @@
 public extension ASTTransformer {
-
   // swiftlint:disable cyclomatic_complexity
   func transform(_ node: Node) throws -> Node {
     switch node {
-    case let n as Module:          return try transform(n)
-    case let n as Func:            return try transform(n)
-    case let n as TypeAlias:       return try transform(n)
-    case let n as FuncSign:        return try transform(n)
-    case let n as TupleSign:       return try transform(n)
-    case let n as TupleSignElem:   return try transform(n)
-    case let n as UnionSign:       return try transform(n)
-    case let n as TypeIdent:       return try transform(n)
-    case let n as If:              return try transform(n)
-    case let n as Match:           return try transform(n)
-    case let n as MatchCase:       return try transform(n)
-    case let n as LetBinding:      return try transform(n)
-    case let n as Binary:          return try transform(n)
-    case let n as Unary:           return try transform(n)
-    case let n as Call:            return try transform(n)
-    case let n as Arg:             return try transform(n)
-    case let n as Tuple:           return try transform(n)
-    case let n as TupleElem:       return try transform(n)
-    case let n as Select:          return try transform(n)
-    case let n as Ident:           return try transform(n)
-    case let n as Scalar<Bool>:    return try transform(n)
-    case let n as Scalar<Int>:     return try transform(n)
-    case let n as Scalar<Double>:  return try transform(n)
-    case let n as Scalar<String>:  return try transform(n)
+    case let n as Module: return try transform(n)
+    case let n as Func: return try transform(n)
+    case let n as TypeAlias: return try transform(n)
+    case let n as FuncSign: return try transform(n)
+    case let n as TupleSign: return try transform(n)
+    case let n as TupleSignElem: return try transform(n)
+    case let n as UnionSign: return try transform(n)
+    case let n as TypeIdent: return try transform(n)
+    case let n as If: return try transform(n)
+    case let n as Match: return try transform(n)
+    case let n as MatchCase: return try transform(n)
+    case let n as LetBinding: return try transform(n)
+    case let n as Binary: return try transform(n)
+    case let n as Unary: return try transform(n)
+    case let n as Call: return try transform(n)
+    case let n as Arg: return try transform(n)
+    case let n as Tuple: return try transform(n)
+    case let n as TupleElem: return try transform(n)
+    case let n as Select: return try transform(n)
+    case let n as Ident: return try transform(n)
+    case let n as Scalar<Bool>: return try transform(n)
+    case let n as Scalar<Int>: return try transform(n)
+    case let n as Scalar<Double>: return try transform(n)
+    case let n as Scalar<String>: return try transform(n)
     default:
       fatalError("unexpected node during generic transform")
     }
   }
+
   // swiftlint:enable cyclomatic_complexity
 
   func transform(_ node: Module) throws -> Node {
@@ -75,7 +75,7 @@ public extension ASTTransformer {
   }
 
   func transform(_ node: TypeIdent) throws -> Node {
-    return node
+    node
   }
 
   // MARK: Expressions
@@ -100,7 +100,7 @@ public extension ASTTransformer {
   }
 
   func transform(_ node: LetBinding) throws -> Node {
-    return node
+    node
   }
 
   func transform(_ node: Binary) throws -> Node {
@@ -143,23 +143,22 @@ public extension ASTTransformer {
   }
 
   func transform(_ node: Ident) -> Node {
-    return node
+    node
   }
 
   func transform(_ node: Scalar<Bool>) -> Node {
-    return node
+    node
   }
 
   func transform(_ node: Scalar<Int>) -> Node {
-    return node
+    node
   }
 
   func transform(_ node: Scalar<Double>) -> Node {
-    return node
+    node
   }
 
   func transform(_ node: Scalar<String>) -> Node {
-    return node
+    node
   }
-
 }

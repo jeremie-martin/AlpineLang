@@ -42,7 +42,8 @@ public final class EvaluationContext {
     set { storage[symbol] = newValue }
   }
 
-  private var storage: [Symbol: Value]
+  public var storage: [Symbol: Value]
+  public var replace: [String: Value] = [:] // Hack bc mutable
 
 }
 
