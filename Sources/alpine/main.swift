@@ -41,36 +41,28 @@ import Interpreter
 /* let funcAS2T = try! interpreter.eval(string: "f(x)", replace: ["f": ret, "x": falseAST])! */
 /* dumper.dump(ast: funcAS2T) */
 
+/* func add(_ x: Int, _ y: Int) -> Int :: */
+/*   x + y */
+/*  */
+/* func sub(_ x: Int, _ y: Int) -> Int :: */
+/* x - y */
+/*  */
+/* func mul(_ x: Int, _ y: Int) -> Int :: */
+/* x * y */
+/*  */
+/* func operationCurry(_ x: Int, op: (Int, Int) -> Int) -> (Int) -> Int :: */
+/*   func partialApply(_ y: Int) -> Int :: */
+/*     op(x,y); */
 var module: String = """
-func add(_ x: Int, _ y: Int) -> Int ::
-  x + y
-
-func sub(_ x: Int, _ y: Int) -> Int ::
-x - y
-
-func mul(_ x: Int, _ y: Int) -> Int ::
-x * y
-
-func operationCurry(_ x: Int, op: (Int, Int) -> Int) -> (Int) -> Int ::
-  func partialApply(_ y: Int) -> Int ::
-    op(x,y);
-
 type Nat :: #zero or #succ(Nat)
 type Boolean :: #True or #False
+type List :: #empty or #cons(_ element: Nat, _ rest: List)
 
-func plusOne(_ nat: Nat) -> Nat ::
-  #succ(nat)
-
-func toBool(_ nat: Nat) -> Boolean ::
-  match(nat)
-    with #zero ::
-      #False
-    with #succ(let x)::
-      #True
-
-func curry(_ foo: (Nat) -> Nat) -> (Nat) -> Boolean::
-  func partial(_ bar: Nat) -> Boolean ::
-    toBool(foo(bar));
+func size(_ list: List) -> Nat ::
+  match list
+    with #empty :: #zero
+    with #cons(let x, let l) ::
+      #succ(size(l))
 """
 /* module = """ */
 /* type MyBoolean :: #MyTrue or #MyFalse */
@@ -171,32 +163,44 @@ try! interpreter.loadModule(fromString: module)
 
 print("HAHAHAHAH")
 /* print(try! interpreter.eval(string: "1,2")) */
-let x = try! interpreter.eval(string: "#succ(#zero)")
-/* interpreter.factory.dump() */
-switch x {
-case .tuple(let a, let b, let c):
-  print("!!!")
-  print(a)
-/* dumper.dump(ast: a) */
-default:
-  break
-}
-let z = try! interpreter.eval(string: "curry(plusOne)")
-print("z", z)
-print("aaa", x == z)
-let y = try! interpreter.eval(string: "@f(@x)", replace: ["@x": x, "@f": z])
-print("bbbb", y)
-
-let m = try! interpreter.eval(string: "add(1, 2)")
-let n = try! interpreter.eval(string: "operationCurry(@x, op: add)", replace: ["@x": m])
-let q = try! interpreter.eval(string: "operationCurry(2, op: mul)")
-switch n {
+let f = try! interpreter.eval(string: "size")
+/* let xx = try! interpreter.eval(string: "#empty") */
+/* let x = try! interpreter.eval(string: "#cons(#zero, #empty)") */
+switch f {
 case .function(let a, let b):
   print("!!!")
   print(a)
+  dumper.dump(ast: a)
+case .tuple(let a, let b, let c):
+  print("!!!")
+  print(a)
+  dumper.dump(ast: a)
 default:
   break
 }
+/* interpreter.factory.dump() */
+/* switch x { */
+/* case .tuple(let a, let b, let c): */
+/*   print("!!!") */
+/*   print(x) */
+/* [> dumper.dump(ast: a) <] */
+/* default: */
+/*   break */
+/* } */
+
+let z = try! interpreter.eval(string: "f(#cons(#zero, #empty))", replace: ["f": f])
+print("z", z)
+assertionFailure()
+/* let y = try! interpreter.eval(string: "f(xx)", replace: ["xx": xx, "f": f]) */
+/* print("z", y) */
+/* print("aaa", x == z) */
+/* let y = try! interpreter.eval(string: "@f(@x)", replace: ["@x": x, "@f": z]) */
+/* print("bbbb", y) */
+
+assertionFailure()
+let m = try! interpreter.eval(string: "add(1, 2)")
+let n = try! interpreter.eval(string: "operationCurry(@x, op: add)", replace: ["@x": m])
+let q = try! interpreter.eval(string: "operationCurry(2, op: mul)")
 
 let s = try! interpreter.eval(
   string: "@g(@f(@f(@g(7) - @f(10))))",

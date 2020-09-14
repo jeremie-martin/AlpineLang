@@ -125,6 +125,8 @@ public final class SymbolCreator: ASTVisitor, SAPass {
   }
 
   public func visit(_ node: LetBinding) throws {
+    if node.scope != nil { return }
+
     let scope = scopes.top
     assert(scope != nil, "unscoped declaration")
 

@@ -198,6 +198,9 @@ public final class ConstraintCreator: ASTVisitor, SAPass {
   }
 
   public func visit(_ node: Ident) throws {
+    if node.type != nil {
+      return
+    }
     // Retrieve the symbol(s) associated with the identifier.
     guard let symbols = node.scope?.symbols[node.name] else {
       node.type = ErrorType.get

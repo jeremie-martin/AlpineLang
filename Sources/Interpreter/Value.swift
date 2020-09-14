@@ -1,16 +1,28 @@
 import AST
+import Parser
 import Sema
 
-public final class ValueFactory {
-  // Lifecycle
-
-  public init() {
-    context = []
-  }
-
+public struct TupleWrapper: Hashable {
   // Public
 
-  public var context: [(Value, Module)]
+  public static func == (lhs: TupleWrapper, rhs: TupleWrapper) -> Bool {
+    lhs.source == rhs.source && lhs.replace == rhs.replace
+  }
+
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(source)
+    hasher.combine(replace)
+  }
+
+  // Internal
+
+  let source: String
+  let replace: [String: Value]
+}
+
+public final class ValueFactory {
+  public var context: [(Value, Module)] = []
+  public var cache: [TupleWrapper: Value] = [:]
 
   public func dump() {
     let dumper = ASTDumper(outputTo: Console.out)

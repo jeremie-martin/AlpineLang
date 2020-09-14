@@ -2,6 +2,7 @@ import AST
 import Utils
 
 public class Parser {
+  // Lifecycle
 
   /// Initializes a parser with a token stream.
   ///
@@ -10,13 +11,18 @@ public class Parser {
     let stream = Array(tokens)
     assert((stream.count > 0) && (stream.last!.kind == .eof), "invalid token stream")
     self.stream = stream
-    self.module = Module(statements: [], range: self.stream.first!.range)
+    module = Module(statements: [], range: self.stream.first!.range)
   }
 
   /// Initializes a parser from a text input.
   public convenience init(source: TextInputBuffer) throws {
     self.init(try Lexer(source: source))
   }
+
+  // Public
+
+  /// The stream of tokens.
+  public var stream: [Token]
 
   /// Parses the token stream into a module declaration.
   public func parseModule() throws -> Module {
@@ -37,12 +43,20 @@ public class Parser {
     }
 
     module.range = module.statements.isEmpty
-      ? self.stream.last!.range
+      ? stream.last!.range
       : SourceRange(
         from: module.statements.first!.range.start,
-        to: module.statements.last!.range.end)
+        to: module.statements.last!.range.end
+      )
     return module
   }
+
+  // Internal
+
+  /// The current position in the token stream.
+  var streamPosition: Int = 0
+  /// The module being parser.
+  var module: Module
 
   /// Attempts to run the given parsing function but backtracks if it failed.
   func attempt<Result>(_ parse: () throws -> Result) -> Result? {
@@ -61,9 +75,9 @@ public class Parser {
   /// delimiter won't.
   func parseList<Element>(
     delimitedBy delimiter: TokenKind,
-    parsingElementWith parse: () throws -> Element)
-    rethrows -> [Element]
-  {
+    parsingElementWith parse: () throws -> Element
+  )
+    rethrows -> [Element] {
     // Skip leading new lines.
     consumeMany { $0.kind == .newline }
 
@@ -87,8 +101,11 @@ public class Parser {
   }
 
   /// Tiny helper to build parse errors.
-  func parseFailure(_ syntaxError: SyntaxError, range: SourceRange? = nil) -> ParseError {
-    return ParseError(syntaxError, range: range ?? peek().range)
+  func parseFailure(
+    _ syntaxError: SyntaxError,
+    range: SourceRange? = nil
+  ) -> ParseError {
+    ParseError(syntaxError, range: range ?? peek().range)
   }
 
   /// Tiny helper to build unexpected token errors.
@@ -96,21 +113,12 @@ public class Parser {
     let t = token ?? peek()
     return ParseError(.unexpectedToken(expected: expected, got: t), range: t.range)
   }
-
-  /// The stream of tokens.
-  var stream: [Token]
-  /// The current position in the token stream.
-  var streamPosition: Int = 0
-  /// The module being parser.
-  var module: Module
-
 }
 
 extension Parser {
-
   /// Returns the token 1 position ahead, without consuming the stream.
   func peek() -> Token {
-    assert((streamPosition) < stream.count)
+    assert(streamPosition < stream.count)
     return stream[streamPosition]
   }
 
@@ -118,7 +126,7 @@ extension Parser {
   @discardableResult
   func consume() -> Token? {
     guard streamPosition < stream.count
-      else { return nil }
+    else { return nil }
     defer { streamPosition += 1 }
     return stream[streamPosition]
   }
@@ -126,8 +134,8 @@ extension Parser {
   /// Attempts to consume a single token of the given kind from the stream.
   @discardableResult
   func consume(_ kind: TokenKind) -> Token? {
-    guard (streamPosition < stream.count) && (stream[streamPosition].kind == kind)
-      else { return nil }
+    guard streamPosition < stream.count, stream[streamPosition].kind == kind
+    else { return nil }
     defer { streamPosition += 1 }
     return stream[streamPosition]
   }
@@ -148,7 +156,7 @@ extension Parser {
   @discardableResult
   func consume(if predicate: (Token) throws -> Bool) rethrows -> Token? {
     guard try (streamPosition < stream.count) && predicate(stream[streamPosition])
-      else { return nil }
+    else { return nil }
     defer { streamPosition += 1 }
     return stream[streamPosition]
   }
@@ -163,11 +171,12 @@ extension Parser {
 
   /// Consumes tokens from the stream as long as they satisfy the given predicate.
   @discardableResult
-  func consumeMany(while predicate: (Token) throws -> Bool) rethrows -> ArraySlice<Token> {
-    let consumed: ArraySlice = try stream[streamPosition...].prefix(while: predicate)
-    streamPosition += consumed.count
-    return consumed
-  }
+  func consumeMany(while predicate: (Token) throws -> Bool) rethrows
+    -> ArraySlice<Token> {
+      let consumed: ArraySlice = try stream[streamPosition...].prefix(while: predicate)
+      streamPosition += consumed.count
+      return consumed
+    }
 
   /// Consume new lines.
   func consumeNewlines() {
@@ -178,7 +187,7 @@ extension Parser {
   }
 
   /// Rewinds the token stream by the given number of positions.
-  func rewind(_ n: Int = 1) {
+  func rewind(_: Int = 1) {
     streamPosition = Swift.max(streamPosition - 1, 0)
   }
 

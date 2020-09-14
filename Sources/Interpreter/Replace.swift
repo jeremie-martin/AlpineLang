@@ -86,9 +86,27 @@ public final class Replace: ASTTransformer {
     if let new = replace[node.name] {
       // print("rippppppppppppppppppppppppp", node.name)
       switch new {
-      case .int:
+      case .int(let n):
         return Scalar<Int>(
           value: new.swiftValue as! Int,
+          module: node.module,
+          range: node.range
+        )
+      case .bool(let n):
+        return Scalar<Bool>(
+          value: n,
+          module: node.module,
+          range: node.range
+        )
+      case .real(let n):
+        return Scalar<Double>(
+          value: n,
+          module: node.module,
+          range: node.range
+        )
+      case .string(let n):
+        return Scalar<String>(
+          value: n,
           module: node.module,
           range: node.range
         )
@@ -99,8 +117,7 @@ public final class Replace: ASTTransformer {
           module: node.module,
           range: e.range
         )
-        return e
-      case .function(var f, let closure):
+      case .function(var f, _):
         /* return node */
         return Func(
           name: replaceLambda[node.name],
@@ -109,29 +126,11 @@ public final class Replace: ASTTransformer {
           module: f.module,
           range: f.range
         )
-        if typeOnly == true {
-          // print("hmmmmmmmmmmmmmm")
-          node.type = f.type
-          return node
-        }
-        /* evalContext.merge(closure.copy, uniquingKeysWith: { _, rhs in rhs }) */
-        /* closure.forEach { */
-        /*   print("hahahaha", $0.key.scope.symbols.count) */
-        /*   assertionFailure() */
-        /*   [> f.scope?.symbols[$0.key.scope] = $0.key <] */
-        /* } */
-
-        let owo = f.copy()
-        owo.name = replaceLambda[node.name]!
-        // String(node.name)
-        return owo
 
       /* return issou */
       default:
         assertionFailure()
-        let owo = node.copy()
-        owo.name = replaceLambda[node.name]!
-        return owo
+        return node
       }
     }
     return node
