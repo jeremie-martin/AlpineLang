@@ -46,6 +46,9 @@ public class Interpreter {
       return val
     }
 
+    // TODO: These input+binding should have the same hash
+    // ("f(x)", "f" -> "not", "x" -> true)
+    // ("g(y)", "g" -> "not", "y" -> true)
     let hashKey = TupleWrapper(source: input, replace: replace)
     if let val = factory.cache[hashKey] {
       return val
@@ -66,7 +69,7 @@ public class Interpreter {
     // Expressions can't be analyzed nor ran out-of-context, they must be nested in a module.
     var module = Module(statements: [expr], range: expr.range)
 
-    let rep = Replace(replace: replace, replaceLambda: replaceLambdaStr, type: false)
+    let rep = Replace(replace: replace, replaceLambda: replaceLambdaStr)
     var ast = try rep.transform(module)
 
     // Run semantic analysis to get the typed AST.
@@ -75,8 +78,7 @@ public class Interpreter {
     let ret = eval(
       expression: typedModule.statements[0] as! Expr,
       replaceContext: rep.evalContext.copy,
-      replace:
-      replaceLambda
+      replace: replaceLambda
     )
 
     factory.context.append((ret, typedModule))
@@ -110,24 +112,10 @@ public class Interpreter {
   }
 
   public func eval(_ expr: Func, in evalContext: EvaluationContext) -> Value {
-    var closure = evalContext.copy
-    /* if let new = replaceIn[expr.name!] { */
-    /*   switch new { */
-    /*   case .function(let f, let cloclo): */
-    /*     closure.merge(cloclo) { _, rhs in rhs } */
-    /*   default: */
-    /*     break */
-    /*   } */
-    /* } */
+    let closure = evalContext.copy
     let value = Value.function(expr, closure: closure)
-    let mod = expr.module!
-    /* let dumper = ASTDumper(outputTo: Console.out) */
-    for (symbol, function) in mod.functions {
-      // print("  -", symbol.name, symbol.scope.id, function.module)
-    }
 
     closure[expr.symbol!] = value
-    /* let issou = eval(expr.body, in: closure) */
 
     return value
   }
@@ -162,22 +150,14 @@ public class Interpreter {
 
   public func eval(_ expr: Call, in evalContext: EvaluationContext) -> Value {
     // Evaluate the callee and its arguments.
-    /* let dumper = ASTDumper(outputTo: Console.out) */
-    /* dumper.dump(ast: expr) */
 
     var callee = eval(expr.callee, in: evalContext) // Value
     let arguments = expr.arguments.map { eval($0.value, in: evalContext) }
     switch expr.callee {
     case let n as Func:
-      /* [> print("MDRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRr") <] */
-      /* [> print(n.name) <] */
-      /* [> evalContext.forEach { print(" - ", $0.key.name, $0.value, $0.key) } <] */
-      /* [> print("XDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDd") <] */
       if let new = evalContext.replace[n.name!] {
         switch new {
         case .function(let f, let closure):
-          /* [> [> expr.callee = f <] <] */
-          /* [> [> let cont = evalContext.merging(closure, uniquingKeysWith: { _, rhs in rhs }) <] <] */
           let funcContext = evalContext.copy.merging(closure) { _, rhs in rhs }
           for (parameter, argument) in zip(f.signature.domain.elements, arguments) {
             if let name = parameter.name {
@@ -186,12 +166,9 @@ public class Interpreter {
               funcContext[symbols[0]] = argument
             }
           }
+
           // Evaluate the function's body.
-          // print("before eval", n.name)
-          let ret = eval(f.body, in: funcContext)
-          /* assertionFailure() */
-          // print(ret)
-          return ret
+          return eval(f.body, in: funcContext)
 
         default:
           callee = eval(expr.callee, in: evalContext)
@@ -205,21 +182,10 @@ public class Interpreter {
 
     switch callee {
     case .builtinFunction(let function):
-      // print("issou")
       let swiftArguments = arguments.compactMap { $0.swiftValue }
-      // print("pouloulou")
       assert(swiftArguments.count == arguments.count)
 
-      /* swiftArguments.forEach { print("-", $0, type(of: $0)) } */
-      // print("function", type(of: function))
-      /* dump(function) */
-      // print("eval test", function([1 as Any, 2 as Any]))
-      // print(function(swiftArguments))
-      // print("sad")
-
-      let aaa = Value(value: function(swiftArguments))!
-      // print("test")
-      return aaa
+      return Value(value: function(swiftArguments))!
 
     case .function(let function, let closure):
       // Update the evaluation context with the function's arguments.
@@ -269,7 +235,7 @@ public class Interpreter {
 
   public func eval(_ expr: Ident, in evalContext: EvaluationContext) -> Value {
     guard let sym = expr.symbol
-    else { print("rip", expr.name, expr.symbol)
+    else {
       fatalError("invalid expression: missing symbol")
     }
 
@@ -358,9 +324,6 @@ public class Interpreter {
     case let e as Scalar<Double>: return .real(e.value)
     case let e as Scalar<String>: return .string(e.value)
     default:
-      // print("222222222222222")
-      // print((expr as! Scalar<Int>).value)
-      /* print(.i(expr as! Scalar<Int>).value)) */
       fatalError()
     }
   }
@@ -368,32 +331,11 @@ public class Interpreter {
   // Perform type inference on an untyped AST.
   private func runSema(
     on module: Module,
-    replace: [String: Value] = [:]
+    replace _: [String: Value] = [:]
   ) throws -> Node {
-    /* for (symbol, function) in astContext.builtinScope.semantics { */
-    /*   print("///", symbol.name, symbol.type, symbol.scope.id) */
-    /* } */
-    /* var rep: [String: Expr] = [:] */
-    /* for r in replace { */
-    /*   rep[r.key] = r.value.copy() */
-    /*   rep[r.key]!.module = module */
-    /* } */
-
-    /* let dumper = ASTDumper(outputTo: Console.out) */
-    // print("//////////////////////")
     var ast = try normalizer.transform(module)
-    // print("\\\\\\\\\\\\\\\\\\\\\\\\")
-    // dumper.dump(ast: module)
-    /* dumper.dump(ast: ast) */
-    /* print("aaaxaaxaxaaaaa") */
-    if replace.count > 0 {
-      /* assertionFailure() */
-    }
 
     try symbolCreator.visit(module)
-    /* print("??") */
-    /* dumper.dump(ast: module) */
-    /* print("aaaaaaaaaaaaa") */
     try nameBinder.visit(module)
     try constraintCreator.visit(module)
 
@@ -402,10 +344,6 @@ public class Interpreter {
         constraint.prettyPrint()
       }
       print()
-    }
-    // print("PFIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIEX")
-    if replace.count > 0 {
-      /* assertionFailure() */
     }
 
     var solver = ConstraintSolver(
@@ -420,7 +358,6 @@ public class Interpreter {
       ast = try dispatcher.transform(module) as! Module
 
     case .failure(let errors):
-      // print("help wtf ???????")
       for error in errors {
         astContext.add(
           error: SAError.unsolvableConstraint(
@@ -432,14 +369,11 @@ public class Interpreter {
       }
     }
 
-    /* dumper.dump(ast: module) */
-    /* if replace.count > 0 { */
-    /*     assertionFailure() */
-    /* } */
-    // TODO:
-    /* guard astContext.errors.isEmpty */
-    /*   else { throw InterpreterError.staticFailure(errors: astContext.errors) } */
+    guard astContext.errors.isEmpty
+    else { throw InterpreterError.staticFailure(errors: astContext.errors) }
+
     astContext.typeConstraints.removeAll()
+
     return ast
   }
 }

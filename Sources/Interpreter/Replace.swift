@@ -5,29 +5,16 @@ import Utils
 public final class Replace: ASTTransformer {
   // Lifecycle
 
-  public init(replace: [String: Value], replaceLambda: [String: String], type: Bool) {
+  public init(replace: [String: Value], replaceLambda: [String: String]) {
     self.replace = replace
-    typeOnly = type
     self.replaceLambda = replaceLambda
   }
 
   // Public
 
-  public var typeOnly: Bool
   public let replace: [String: Value]
   public let replaceLambda: [String: String]
   public var evalContext: EvaluationContext = [:]
-
-  /* public var context: [Func: EvaluationContext] = [:] */
-
-  /* public var replace: [String : Expr] { */
-  /*     get { */
-  /*         return replace */
-  /*     } */
-  /*     set(new) { */
-  /*         replace = new */
-  /*     } */
-  /* } */
 
   public func transform(_ node: Binary) throws -> Node {
     Call(
@@ -67,24 +54,8 @@ public final class Replace: ASTTransformer {
     )
   }
 
-  /* public func transform(_ node: Call) throws -> Node { */
-  /*   node.arguments = try node.arguments.map(transform) as! [Arg] */
-  /*   switch node.callee { */
-  /*   case let n as Ident: */
-  /*     if let new = replace[n.name] { */
-  /*       node.callee = try transform(node.callee) as! Expr */
-  /*       let owo = eval() */
-  /*     } */
-  /*   default: */
-  /*     node.callee = try transform(node.callee) as! Expr */
-  /*     break */
-  /*   } */
-  /*   return node */
-  /* } */
-
   public func transform(_ node: Ident) throws -> Node {
     if let new = replace[node.name] {
-      // print("rippppppppppppppppppppppppp", node.name)
       switch new {
       case .int(let n):
         return Scalar<Int>(
@@ -118,7 +89,6 @@ public final class Replace: ASTTransformer {
           range: e.range
         )
       case .function(var f, _):
-        /* return node */
         return Func(
           name: replaceLambda[node.name],
           signature: f.signature,
@@ -126,8 +96,6 @@ public final class Replace: ASTTransformer {
           module: f.module,
           range: f.range
         )
-
-      /* return issou */
       default:
         assertionFailure()
         return node

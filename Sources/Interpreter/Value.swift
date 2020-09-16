@@ -23,19 +23,6 @@ public struct TupleWrapper: Hashable {
 public final class ValueFactory {
   public var context: [(Value, Module)] = []
   public var cache: [TupleWrapper: Value] = [:]
-
-  public func dump() {
-    let dumper = ASTDumper(outputTo: Console.out)
-    switch context[0].0 {
-    case .tuple(let a, let b, let c):
-      print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-      print(a)
-      dumper.dump(ast: context[0].1)
-      dumper.dump(ast: a)
-    default:
-      break
-    }
-  }
 }
 
 public enum Value {
@@ -153,7 +140,6 @@ extension Value: CustomStringConvertible {
 
     case .function(let f, closure: _):
       /* return f.name! */
-      /* print(f.body.type) */
       /* let name = (f.name != nil) ? f.name! : "" */
       return "<\(f.name!) \(f.type!)>"
 

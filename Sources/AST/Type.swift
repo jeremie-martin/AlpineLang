@@ -25,7 +25,6 @@ public class TypeBase: Hashable, CustomStringConvertible {
   }
 
   public func copy() -> TypeBase {
-    // print("TypeBase")
     self
   }
 
@@ -49,8 +48,6 @@ public final class Metatype: TypeBase {
   public let type: TypeBase
 
   override public func copy() -> Metatype {
-    // print("Metatype")
-    // print("so", self.type)
     let m = Metatype(of: type.copy())
     return m
   }
@@ -69,7 +66,6 @@ public final class ErrorType: TypeBase {
   public static let get = ErrorType()
 
   override public func copy() -> ErrorType {
-    // print("ErrorType")
     self
   }
 
@@ -102,7 +98,6 @@ public final class BuiltinType: TypeBase {
   }
 
   override public func copy() -> BuiltinType {
-    // print("BuiltinType")
     BuiltinType(name: String(name))
   }
 
@@ -128,14 +123,6 @@ public final class TypeVariable: TypeBase {
 
   override public var hashValue: Int {
     id
-  }
-
-  override public func copy() -> TypeVariable {
-    // print("TypeVariable")
-    TypeVariable.nextID -= 1
-    var v = TypeVariable()
-    v.id = Int(id)
-    return v
   }
 
   // Fileprivate
@@ -166,7 +153,6 @@ public final class FunctionType: TypeBase {
   public let codomain: TypeBase
 
   override public func copy() -> FunctionType {
-    // print("FunctionType")
     FunctionType(domain: domain.copy(), codomain: codomain.copy())
   }
 
@@ -198,7 +184,6 @@ public final class TupleType: TypeBase {
   }
 
   override public func copy() -> TupleType {
-    // print("TupleType")
     TupleType(
       label: (label != nil) ? String(label!) : nil,
       elements: elements.map { $0.copy() }
@@ -250,8 +235,6 @@ public struct TupleTypeElem: Equatable, CustomStringConvertible {
   }
 
   public func copy() -> TupleTypeElem {
-    // print("TupleTypeElem")
-    // print(self, self.label, self.type)
     TupleTypeElem(label: (label != nil) ? String(label!) : nil, type: type.copy())
   }
 }
@@ -279,12 +262,6 @@ public final class UnionType: TypeBase {
   }
 
   override public func copy() -> UnionType {
-    // print("UnionType")
-
-    /* for t in self.cases { */
-    /*     print("- ", t) */
-    /* } */
-    /* print() */
     UnionType(cases: try cases.setmap { $0 })
   }
 
